@@ -181,6 +181,27 @@
     .welcome-step-number {display:grid;place-items:center;width:32px;height:32px;line-height:1;border-radius:50%;background:var(--blue-soft);color:var(--blue);font-weight:900;margin-bottom:9px}
     .welcome-step strong {display:block;margin-bottom:3px}
     .welcome-step > span:not(.welcome-step-number) {display:block;color:var(--muted);font-size:.88rem}
+    .module-choice-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:20px 0}
+    .module-choice {min-height:176px;display:flex;flex-direction:column;align-items:flex-start;gap:9px;text-align:left;padding:20px;border:1px solid var(--line);border-radius:16px;background:var(--panel-soft);color:var(--ink);cursor:pointer;transition:.15s ease}
+    .module-choice:hover,.module-choice:focus-visible {border-color:var(--blue);box-shadow:0 7px 18px rgba(34,104,167,.1);transform:translateY(-1px)}
+    .module-choice strong {font-size:1.16rem;line-height:1.25}
+    .module-choice > span:not(.module-symbol) {color:var(--muted)}
+    .module-symbol {display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:var(--blue-soft);color:var(--blue);font-size:1.15rem;font-weight:900}
+    .tco-input-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+    .tco-input-grid .input {max-width:none}
+    .tco-result-highlight {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:15px 0}
+    .tco-result-card {border:1px solid var(--line);border-radius:14px;background:var(--panel-soft);padding:16px}
+    .tco-result-card.primary-result {border-color:var(--blue)}
+    .tco-result-card .stat-value {font-size:1.45rem;overflow-wrap:anywhere}
+    .tco-table {width:100%;border-collapse:collapse;margin-top:12px}
+    .tco-table th,.tco-table td {padding:10px 12px;border:1px solid var(--line);text-align:right;vertical-align:top}
+    .tco-table th:first-child,.tco-table td:first-child {text-align:left}
+    .tco-table thead th {background:var(--panel-soft)}
+    .tco-table td strong {font-size:1.02rem}
+    .tco-assumptions {margin-top:15px;padding:13px 15px;border:1px solid var(--line);border-radius:12px;background:var(--panel-soft)}
+    .tco-assumptions summary {font-weight:800;cursor:pointer}
+    .tco-assumptions p {color:var(--muted);margin:10px 0 0}
+    .tco-error {color:#ad272f;font-weight:750;margin-top:12px}
     .share-icon {width:18px;height:18px;vertical-align:-4px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;margin-right:6px}
     .print-hint {color:var(--muted);font-size:.84rem;margin-top:7px}
     .button-row {display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:11px;margin-top:17px}
@@ -241,6 +262,7 @@
       .panel {padding:17px}
       .two-col,.conditions,.schedule-grid,.schedule-controls {grid-template-columns:1fr}
       .welcome-steps {grid-template-columns:1fr}
+      .module-choice-grid,.tco-result-highlight,.tco-input-grid {grid-template-columns:1fr}
       .mode-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
       .type-grid {grid-template-columns:1fr}
       .field-row {grid-template-columns:1fr 1fr}
@@ -319,7 +341,7 @@
     function truckPhotoFor(model,type){var s=seriesOf(model||"");var map={"8FBE":"toyota-8fbe.webp","8FBN":"toyota-8fbn.webp","8FBH":"toyota-8fbh.webp","8FB":"toyota-8fb-counterbalance.webp","8FBR(S)":"toyota-8fbr.webp","8FBS(S)":"toyota-8fbs-reach.webp","8FBP":"toyota-8fbp-order-picker.webp","4CBT":"toyota-4cbt-tow-tractor.webp","3TE":"toyota-3te-tow-tractor.webp"};return map[s]?"assets/"+map[s]:(type==="CB"?TRAKNUS_CB_FORKLIFT_IMAGE:TRAKNUS_WH_FORKLIFT_IMAGE);}
     var state = {
       screen:"welcome", lang:localStorage.getItem("traknus-lang") || "en", theme:localStorage.getItem("traknus-theme") || "light",
-      customer:{company:"",location:"",salesperson:""}, customerError:"",
+      customer:{company:"",location:"",salesperson:""}, customerError:"", module:null, tco:{voltage:"25.6",capacity:"210",price:"60976000"},
       trucks:[newTruck("Forklift 1")],
       workdayHours:8, shiftCount:1, shiftLengths:[], scheduleConfigKey:null,
       firstStart:"08:00", shiftStarts:[], breaks:[[]], visualResultKeys:null
@@ -504,7 +526,73 @@
       return html;
     }
     function welcomeScreen() {
-      return '<section class="panel welcome-panel"><h2 class="welcome-title">'+tr("Mulai dari forklift dan jadwal kerjamu.","Start with your forklift and work schedule.")+'</h2><p class="sub">'+tr("Bandingkan pilihan kapasitas baterai, lihat perkiraan sisa baterai sepanjang shift, lalu simpan hasilnya sebagai PDF.","Compare battery capacities, follow the estimated battery level through your shifts, and save a clear PDF report.")+'</p><div class="welcome-steps"><div class="welcome-step"><span class="welcome-step-number">1</span><strong>'+tr("Kondisi kerja","Working conditions")+'</strong><span>'+tr("Tentukan jam operasi harian dan jumlah shift.","Set daily operating hours and the number of shifts.")+'</span></div><div class="welcome-step"><span class="welcome-step-number">2</span><strong>'+tr("Jadwal shift","Shift schedule")+'</strong><span>'+tr("Isi waktu mulai, durasi, istirahat, dan charging.","Set shift start times, breaks, and charging.")+'</span></div><div class="welcome-step"><span class="welcome-step-number">3</span><strong>'+tr("Pilih forklift","Choose a forklift")+'</strong><span>'+tr("Tentukan model, mode kerja, dan kapasitas baterai.","Choose the model, operating mode, and battery capacity.")+'</span></div><div class="welcome-step"><span class="welcome-step-number">4</span><strong>'+tr("Lihat dan cetak","View and print")+'</strong><span>'+tr("Baca grafik dan cetak ringkasan sebagai PDF.","Review the chart and print the report as a PDF.")+'</span></div></div><section class="customer-block"><h3>'+tr("Data customer","Customer details")+'</h3><p class="sub">'+tr("Isi informasi customer sebelum memulai simulasi.","Enter the customer information before starting the simulation.")+'</p><div class="customer-grid"><div class="field"><label for="customerCompany">'+tr("Nama PT / perusahaan","Company name")+'</label><input class="input" id="customerCompany" data-input="customer" data-field="company" autocomplete="organization" placeholder="'+tr("Contoh: PT Traktor Nusantara","e.g. PT Traktor Nusantara")+'" value="'+esc(state.customer.company)+'"></div><div class="field"><label for="customerLocation">'+tr("Lokasi kerja","Work location")+'</label><input class="input" id="customerLocation" data-input="customer" data-field="location" autocomplete="address-level2" placeholder="'+tr("Contoh: Gudang Cikarang","e.g. Cikarang Warehouse")+'" value="'+esc(state.customer.location)+'"></div><div class="field"><label for="customerSalesperson">'+tr("Sales person","Salesperson")+'</label><input class="input" id="customerSalesperson" data-input="customer" data-field="salesperson" autocomplete="name" placeholder="'+tr("Contoh: Azaria Syahla","e.g. Azaria Syahla")+'" value="'+esc(state.customer.salesperson)+'"></div></div>'+(state.customerError?'<div class="customer-error" role="alert">'+esc(state.customerError)+'</div>':'')+'</section><button class="primary" data-act="start">'+tr("Mulai simulasi","Start simulation")+' →</button></section>';
+      return '<section class="panel welcome-panel"><h2 class="welcome-title">'+tr("Mulai dari data customer.","Start with customer details.")+'</h2><p class="sub">'+tr("Setelah ini, pilih Lithium Battery Simulator atau TCO sesuai kebutuhan.","Next, choose the Lithium Battery Simulator or TCO.")+'</p><section class="customer-block"><h3>'+tr("Data customer","Customer details")+'</h3><p class="sub">'+tr("Isi informasi customer sebelum memilih modul.","Enter customer information before choosing a module.")+'</p><div class="customer-grid"><div class="field"><label for="customerCompany">'+tr("Nama PT / perusahaan","Company name")+'</label><input class="input" id="customerCompany" data-input="customer" data-field="company" autocomplete="organization" placeholder="'+tr("Contoh: PT Traktor Nusantara","e.g. PT Traktor Nusantara")+'" value="'+esc(state.customer.company)+'"></div><div class="field"><label for="customerLocation">'+tr("Lokasi kerja","Work location")+'</label><input class="input" id="customerLocation" data-input="customer" data-field="location" autocomplete="address-level2" placeholder="'+tr("Contoh: Gudang Cikarang","e.g. Cikarang Warehouse")+'" value="'+esc(state.customer.location)+'"></div><div class="field"><label for="customerSalesperson">'+tr("Sales person","Salesperson")+'</label><input class="input" id="customerSalesperson" data-input="customer" data-field="salesperson" autocomplete="name" placeholder="'+tr("Contoh: Azaria Syahla","e.g. Azaria Syahla")+'" value="'+esc(state.customer.salesperson)+'"></div></div>'+(state.customerError?'<div class="customer-error" role="alert">'+esc(state.customerError)+'</div>':'')+'</section><button class="primary" data-act="start">'+tr("Lanjut pilih modul","Continue to module selection")+' →</button></section>';
+    }
+    function customerSummary() {
+      return '<div class="customer-summary"><h3>'+tr("Data customer","Customer details")+'</h3><p><strong>'+esc(state.customer.company)+'</strong> · '+esc(state.customer.location)+' · '+esc(state.customer.salesperson)+'</p></div>';
+    }
+    function moduleScreen() {
+      return '<section class="panel"><div class="eyebrow-small">'+tr("Pilih modul","Choose a module")+'</div><h2>'+tr("Apa yang ingin kamu hitung?","What would you like to calculate?")+'</h2><p class="sub">'+tr("Pilih salah satu untuk melanjutkan.","Choose one to continue.")+'</p>'+customerSummary()+'<div class="module-choice-grid"><button class="module-choice" type="button" data-act="module-battery"><span class="module-symbol">↗</span><strong>Lithium Battery Simulator</strong><span>'+tr("Perkirakan level baterai sepanjang jadwal kerja forklift.","Estimate battery level throughout the forklift work schedule.")+'</span><b>'+tr("Buka simulator","Open simulator")+' →</b></button><button class="module-choice" type="button" data-act="module-tco"><span class="module-symbol">Rp</span><strong>Total Cost of Ownership (TCO)</strong><span>'+tr("Bandingkan estimasi biaya bulanan Lead Acid dan baterai Traknus Lithium.","Compare estimated monthly costs for Lead Acid and Traknus Lithium batteries.")+'</span><b>'+tr("Buka kalkulator TCO","Open TCO calculator")+' →</b></button></div><div class="button-row"><button class="secondary" data-act="edit-customer">← '+tr("Ubah data customer","Edit customer details")+'</button></div></section>';
+    }
+    function tcoMoney(n) {
+      return 'Rp '+new Intl.NumberFormat(state.lang==="id"?"id-ID":"en-US",{maximumFractionDigits:0}).format(Math.round(n));
+    }
+    function calculateTcoBattery(voltage,capacity,price,lifeYears,efficiency,cycles,maintenance,risk) {
+      var depreciation=price/(lifeYears*12);
+      var energyPerCycle=voltage*capacity*0.8/efficiency/1000;
+      var charging=energyPerCycle*1140*cycles;
+      return {voltage:voltage,capacity:capacity,price:price,lifeYears:lifeYears,efficiency:efficiency,cycles:cycles,maintenance:maintenance,risk:risk,depreciation:depreciation,energyPerCycle:energyPerCycle,charging:charging,total:depreciation+charging+maintenance+risk,nameplateKwh:voltage*capacity/1000,costPerKwh:price/(voltage*capacity/1000),fumes:risk>0};
+    }
+    function tcoResults() {
+      var voltage=Number(state.tco.voltage),capacity=Number(state.tco.capacity),price=Number(state.tco.price);
+      if(!Number.isFinite(voltage)||!Number.isFinite(capacity)||!Number.isFinite(price)||voltage<=0||capacity<=0||price<=0)return null;
+      return {lead:calculateTcoBattery(24,225,27300000,2,0.75,50,250000,1500000),lithium:calculateTcoBattery(voltage,capacity,price,5,0.95,25,0,0)};
+    }
+    function tcoPrintReport(results) {
+      var now=new Date(),locale=state.lang==="id"?"id-ID":"en-GB";
+      var date=new Intl.DateTimeFormat(locale,{day:"numeric",month:"long",year:"numeric"}).format(now);
+      var time=new Intl.DateTimeFormat(locale,{hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).format(now);
+      var difference=results.lead.total-results.lithium.total;
+      var differenceLabel=difference>=0?tr("Estimasi penghematan bulanan dibanding Lead Acid: ","Estimated monthly savings vs Lead Acid: "):tr("Biaya Lithium lebih tinggi per bulan sebesar: ","Lithium monthly cost is higher by: ");
+      var differenceText=tcoMoney(Math.abs(difference))+" ("+fmtNum(Math.abs(difference/results.lead.total*100))+"%)";
+      var rows=[
+        [tr("Tegangan","Voltage"),fmtNum(results.lead.voltage)+" V",fmtNum(results.lithium.voltage)+" V"],
+        [tr("Kapasitas baterai","Battery capacity"),fmtNum(results.lead.capacity)+" Ah",fmtNum(results.lithium.capacity)+" Ah"],
+        [tr("Harga baterai","Battery price"),tcoMoney(results.lead.price),tcoMoney(results.lithium.price)],
+        [tr("Perkiraan masa pakai","Estimated service life"),fmtNum(results.lead.lifeYears)+" "+tr("tahun","years"),fmtNum(results.lithium.lifeYears)+" "+tr("tahun","years")],
+        [tr("Penyusutan per bulan","Depreciation per month"),tcoMoney(results.lead.depreciation),tcoMoney(results.lithium.depreciation)],
+        [tr("Biaya charging per bulan","Charging cost per month"),tcoMoney(results.lead.charging),tcoMoney(results.lithium.charging)],
+        [tr("Perawatan dan risiko per bulan","Maintenance and risk per month"),tcoMoney(results.lead.maintenance+results.lead.risk),tcoMoney(results.lithium.maintenance+results.lithium.risk)],
+        [tr("Biaya per kWh kapasitas nominal","Cost per nominal kWh"),tcoMoney(results.lead.costPerKwh),tcoMoney(results.lithium.costPerKwh)],
+        [tr("Asap asam baterai","Battery acid fumes"),tr("Ada","Yes"),tr("Tidak ada","No")],
+        [tr("Total biaya kepemilikan per bulan","Total ownership cost per month"),'<strong>'+tcoMoney(results.lead.total)+'</strong>','<strong>'+tcoMoney(results.lithium.total)+'</strong>']
+      ];
+      return '<article class="print-report"><header class="print-header"><img class="print-logo" src="traknus_lithium_logo.png" alt="Traknus"><div class="print-date">'+tr("Tanggal & waktu laporan","Report date & time")+'<br><strong>'+date+' · '+time+'</strong></div></header><h1>'+tr("Total Cost of Ownership (TCO)","Total Cost of Ownership (TCO)")+'</h1><p class="print-lead">'+tr("Perbandingan estimasi biaya baterai Lead Acid dan Traknus Lithium.","Estimated cost comparison for Lead Acid and Traknus Lithium batteries.")+'</p><section><h2>'+tr("Data customer","Customer details")+'</h2><div class="print-facts"><div class="print-fact"><span>'+tr("Perusahaan","Company")+'</span><strong>'+esc(state.customer.company)+'</strong></div><div class="print-fact"><span>'+tr("Lokasi kerja","Work location")+'</span><strong>'+esc(state.customer.location)+'</strong></div><div class="print-fact"><span>'+tr("Sales person","Salesperson")+'</span><strong>'+esc(state.customer.salesperson)+'</strong></div></div></section><section><h2>'+tr("Perbandingan biaya bulanan","Monthly cost comparison")+'</h2><table class="print-table"><thead><tr><th>'+tr("Komponen biaya","Cost item")+'</th><th>Lead Acid · '+tr("Acuan","Reference")+'</th><th>Traknus Lithium</th></tr></thead><tbody>'+rows.map(function(r){return '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td></tr>';}).join("")+'</tbody></table><p>'+differenceLabel+'<strong>'+differenceText+'</strong></p></section><p class="print-note">'+tr("Perhitungan mengikuti asumsi dan rumus workbook TCO yang diberikan.","Calculations follow the assumptions and formulas in the supplied TCO workbook.")+'</p></article>';
+    }
+    function tcoScreen() {
+      var results=tcoResults(),report="",html='<section class="panel"><div class="panel-head"><div><div class="eyebrow-small">'+tr("Modul biaya baterai","Battery cost module")+'</div><h2>Total Cost of Ownership (TCO)</h2><p class="sub">'+tr("Isi tiga data baterai Traknus Lithium. Asumsi lainnya tetap mengikuti workbook TCO.","Enter three Traknus Lithium battery details. All other assumptions follow the TCO workbook.")+'</p></div></div>'+customerSummary()+'<div class="condition-box"><h3>Traknus Lithium</h3><div class="tco-input-grid"><div class="field"><label for="tcoVoltage">'+tr("Voltage (V)","Voltage (V)")+'</label><input class="input" id="tcoVoltage" type="number" min="0.1" step="0.1" data-input="tco" data-field="voltage" value="'+esc(state.tco.voltage)+'" placeholder="'+tr("Contoh: 25,6","e.g. 25.6")+'"></div><div class="field"><label for="tcoCapacity">'+tr("Capacity (Ah)","Capacity (Ah)")+'</label><input class="input" id="tcoCapacity" type="number" min="1" step="1" data-input="tco" data-field="capacity" value="'+esc(state.tco.capacity)+'" placeholder="'+tr("Contoh: 210","e.g. 210")+'"></div><div class="field"><label for="tcoPrice">'+tr("Harga (Rp)","Price (Rp)")+'</label><input class="input" id="tcoPrice" type="number" min="1" step="1000" data-input="tco" data-field="price" value="'+esc(state.tco.price)+'" placeholder="'+tr("Contoh: 60.976.000","e.g. 60,976,000")+'"></div></div>'+(results?'':'<p class="tco-error" role="alert">'+tr("Isi Voltage, Capacity, dan Harga dengan angka lebih dari nol agar hasil bisa dihitung.","Enter a Voltage, Capacity, and Price greater than zero to calculate the result.")+'</p>')+'</div>';
+      if(results){
+        var saving=results.lead.total-results.lithium.total,percent=saving/results.lead.total*100;
+        var msg=saving>=0?tr("Estimasi penghematan per bulan dibanding Lead Acid","Estimated monthly savings vs Lead Acid"):tr("Biaya Lithium lebih tinggi per bulan dibanding Lead Acid","Lithium monthly cost is higher than Lead Acid");
+        var savingsClass=saving>=0?"green-box":"alert-box";
+        var savingsValue=(saving<0?"−":"")+tcoMoney(Math.abs(saving))+" ("+fmtNum(Math.abs(percent))+"%)";
+        var rows=[
+          [tr("Tegangan","Voltage"),fmtNum(results.lead.voltage)+" V",fmtNum(results.lithium.voltage)+" V"],
+          [tr("Kapasitas","Capacity"),fmtNum(results.lead.capacity)+" Ah",fmtNum(results.lithium.capacity)+" Ah"],
+          [tr("Harga baterai","Battery price"),tcoMoney(results.lead.price),tcoMoney(results.lithium.price)],
+          [tr("Masa pakai baterai","Battery service life"),fmtNum(results.lead.lifeYears)+" "+tr("tahun","years"),fmtNum(results.lithium.lifeYears)+" "+tr("tahun","years")],
+          [tr("Penyusutan per bulan","Depreciation per month"),tcoMoney(results.lead.depreciation),tcoMoney(results.lithium.depreciation)],
+          [tr("Biaya charging per bulan","Charging cost per month"),tcoMoney(results.lead.charging),tcoMoney(results.lithium.charging)],
+          [tr("Perawatan + risiko per bulan","Maintenance + risk per month"),tcoMoney(results.lead.maintenance+results.lead.risk),tcoMoney(results.lithium.maintenance+results.lithium.risk)],
+          [tr("Biaya per kWh kapasitas nominal","Cost per nominal kWh"),tcoMoney(results.lead.costPerKwh),tcoMoney(results.lithium.costPerKwh)],
+          [tr("Asap asam baterai","Battery acid fumes"),tr("Ada","Yes"),tr("Tidak ada","No")],
+          [tr("Total biaya kepemilikan per bulan","Total ownership cost per month"),'<strong>'+tcoMoney(results.lead.total)+'</strong>','<strong>'+tcoMoney(results.lithium.total)+'</strong>']
+        ];
+        html+='<div class="tco-result-highlight"><article class="tco-result-card"><div class="stat-label">Lead Acid · '+tr("Acuan","Reference")+'</div><div class="stat-value">'+tcoMoney(results.lead.total)+'</div><div class="sub">'+tr("estimasi total per bulan","estimated total per month")+'</div></article><article class="tco-result-card primary-result"><div class="stat-label">Traknus Lithium</div><div class="stat-value">'+tcoMoney(results.lithium.total)+'</div><div class="sub">'+tr("estimasi total per bulan","estimated total per month")+'</div></article></div><div class="'+savingsClass+'"><strong>'+msg+':</strong> '+savingsValue+'</div><div class="report-table-wrap"><table class="tco-table"><thead><tr><th>'+tr("Komponen biaya","Cost item")+'</th><th>Lead Acid · '+tr("Acuan","Reference")+'</th><th>Traknus Lithium</th></tr></thead><tbody>'+rows.map(function(r){return '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td></tr>';}).join("")+'</tbody></table></div><details class="tco-assumptions"><summary>'+tr("Asumsi tetap dari workbook","Fixed assumptions from the workbook")+'</summary><p>'+tr("Tarif listrik: Rp1.140/kWh · kedalaman pemakaian baterai: 80% · Lead Acid: usia 2 tahun, efisiensi charging 75% sesuai nilai yang dipakai rumus, 50 siklus/bulan, perawatan Rp250.000/bulan, risiko Rp1.500.000/bulan · Traknus Lithium: usia 5 tahun, efisiensi charging 95%, 25 siklus/bulan, perawatan dan risiko Rp0.","Electricity: Rp1,140/kWh · battery depth of discharge: 80% · Lead Acid: 2-year life, 75% charging efficiency as used by the formula, 50 cycles/month, Rp250,000/month maintenance, Rp1,500,000/month risk · Traknus Lithium: 5-year life, 95% charging efficiency, 25 cycles/month, Rp0 maintenance and risk.")+'</p><p>'+tr("Workbook yang diberikan memuat data Lead Acid dan Traknus Lithium; kolom angka Enelore belum tersedia.","The supplied workbook has values for Lead Acid and Traknus Lithium; it does not contain Enelore values.")+'</p></details>';
+        report=tcoPrintReport(results);
+      }
+      html+='<div class="button-row"><button class="secondary" data-act="back-modules">← '+tr("Kembali pilih modul","Back to module selection")+'</button><div class="button-group"><button class="primary" data-act="tco-print">⌑ '+tr("Cetak / simpan PDF","Print / save PDF")+'</button><button class="secondary" data-act="start-over">'+tr("Mulai dari awal","Start over")+'</button></div></div></section>';
+      return html+report;
     }
     function allConfigs() {
       return state.trucks.map(function(t,index){
@@ -785,9 +873,11 @@
       document.getElementById("themeButton").textContent=state.theme==="dark"?"☼":"◐";
       document.getElementById("themeButton").setAttribute("aria-label",tr("Ganti tema","Toggle color theme"));
       app.innerHTML=state.screen==="welcome"?welcomeScreen():
+        (state.screen==="modules"?moduleScreen():
+        (state.screen==="tco"?tcoScreen():
         (state.screen==="conditions"?conditionsScreen():
         (state.screen==="schedule"?scheduleScreen():
-        (state.screen==="trucks"?truckScreen():analysisScreen())));
+        (state.screen==="trucks"?truckScreen():analysisScreen())))));
     }
     function validSetup() {
       var configs=state.trucks;
@@ -814,7 +904,12 @@
       else if(act==="mode")t.mode=b.dataset.value;
       else if(act==="add-truck"){if(state.trucks.length<6)state.trucks.push(newTruck("Forklift "+(state.trucks.length+1)));}
       else if(act==="remove-truck"){var removeIndex=Number(b.dataset.index);if(removeIndex>0&&removeIndex<state.trucks.length){state.trucks.splice(removeIndex,1);state.trucks.forEach(function(unit,i){unit.name="Forklift "+(i+1);});}}
-      else if(act==="start"){syncCustomerInputs();if(!state.customer.company.trim()||!state.customer.location.trim()||!state.customer.salesperson.trim()){state.customerError=tr("Lengkapi nama perusahaan, lokasi kerja, dan sales person dulu.","Please enter the company, work location, and salesperson first.");}else{state.customerError="";state.screen="conditions";}}
+      else if(act==="start"){syncCustomerInputs();if(!state.customer.company.trim()||!state.customer.location.trim()||!state.customer.salesperson.trim()){state.customerError=tr("Lengkapi nama perusahaan, lokasi kerja, dan sales person dulu.","Please enter the company, work location, and salesperson first.");}else{state.customerError="";state.screen="modules";}}
+      else if(act==="module-battery"){state.module="battery";state.screen="conditions";}
+      else if(act==="module-tco"){state.module="tco";state.screen="tco";}
+      else if(act==="edit-customer")state.screen="welcome";
+      else if(act==="back-modules")state.screen="modules";
+      else if(act==="tco-print"){window.print();return;}
       else if(act==="shift-minus")state.shiftCount=Math.max(1,state.shiftCount-1);
       else if(act==="shift-plus")state.shiftCount=Math.min(24,state.shiftCount+1);
       else if(act==="confirm-conditions"){
@@ -833,14 +928,14 @@
       else if(act==="charge"){var si=Number(b.dataset.shift),bi=Number(b.dataset.break);state.breaks[si][bi].charge=b.dataset.value==="true";}
       else if(act==="truck-intensity"){var ci=Number(b.dataset.index);if(state.trucks[ci])state.trucks[ci].intensity=b.dataset.value;}
       else if(act==="truck-lift"){var ci=Number(b.dataset.index);if(state.trucks[ci])state.trucks[ci].lift=b.dataset.value;}
-      else if(act==="start-over"){state= {screen:"welcome",lang:state.lang,theme:state.theme,customer:{company:"",location:"",salesperson:""},customerError:"",trucks:[newTruck("Forklift 1")],workdayHours:8,shiftCount:1,shiftLengths:[],scheduleConfigKey:null,firstStart:"08:00",shiftStarts:[],breaks:[]};}
+      else if(act==="start-over"){state= {screen:"welcome",lang:state.lang,theme:state.theme,customer:{company:"",location:"",salesperson:""},customerError:"",module:null,tco:{voltage:"25.6",capacity:"210",price:"60976000"},trucks:[newTruck("Forklift 1")],workdayHours:8,shiftCount:1,shiftLengths:[],scheduleConfigKey:null,firstStart:"08:00",shiftStarts:[],breaks:[]};}
       else if(act==="print"){window.print();return;}
       else if(act==="email-report"){emailReport();return;}
       else if(act==="analyze"){var err=validSetup();if(err){var existing=document.getElementById("formError");if(existing)existing.remove();b.insertAdjacentHTML("afterend",'<span id="formError" class="error">'+esc(err)+'</span>');return;}state.screen="analysis";}
       render();
     });
     app.addEventListener("input",function(e){
-      var el=e.target;if(el.dataset.input==="customer"){state.customer[el.dataset.field]=el.value;state.customerError="";}
+      var el=e.target;if(el.dataset.input==="customer"){state.customer[el.dataset.field]=el.value;state.customerError="";}else if(el.dataset.input==="tco"){state.tco[el.dataset.field]=el.value;}
     });
     app.addEventListener("change",function(e){
       var el=e.target,input=el.dataset.input;if(!input)return;
@@ -852,6 +947,7 @@
       else if(input==="truck-battery"&&t){var ah=Number(el.dataset.value);t.batteries=el.checked?(t.batteries.indexOf(ah)>=0?t.batteries:t.batteries.concat([ah])):t.batteries.filter(function(x){return x!==ah;});}
       else if(input==="truck-mode"&&t)t.mode=el.value;
       
+      else if(input==="tco")state.tco[el.dataset.field]=el.value;
       else if(input==="shift-count")state.shiftCount=Math.max(1,Math.min(24,parseInt(el.value,10)||1));
       else if(input==="workday-hours")state.workdayHours=Math.max(1,Math.min(24,Number(el.value)||8));
       else if(input==="shift-start"){var si=Number(el.dataset.shift);state.shiftStarts[si]=el.value;if(si===0)state.firstStart=el.value;for(var j=si+1;j<state.shiftCount;j++)state.shiftStarts[j]=null;}
