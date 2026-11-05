@@ -58,7 +58,7 @@
       "en_ah_per_hour": 75,
       "battery_options": [
         {
-          "ah": 456,
+          "ah": 525,
           "reserve_pct": 0.05
         }
       ],
@@ -188,7 +188,11 @@
       "en_ah_per_hour": 93.75,
       "battery_options": [
         {
-          "ah": 604,
+          "ah": 525,
+          "reserve_pct": 0.05
+        },
+        {
+          "ah": 630,
           "reserve_pct": 0.05
         }
       ],
@@ -214,11 +218,11 @@
       "en_ah_per_hour": 67.5,
       "battery_options": [
         {
-          "ah": 302,
+          "ah": 525,
           "reserve_pct": 0.05
         },
         {
-          "ah": 604,
+          "ah": 630,
           "reserve_pct": 0.05
         }
       ],
@@ -274,11 +278,11 @@
       "en_ah_per_hour": 85.41666666666667,
       "battery_options": [
         {
-          "ah": 456,
+          "ah": 420,
           "reserve_pct": 0.05
         },
         {
-          "ah": 604,
+          "ah": 630,
           "reserve_pct": 0.05
         }
       ],
@@ -304,11 +308,7 @@
       "en_ah_per_hour": 89.58333333333333,
       "battery_options": [
         {
-          "ah": 456,
-          "reserve_pct": 0.05
-        },
-        {
-          "ah": 604,
+          "ah": 525,
           "reserve_pct": 0.05
         }
       ],
@@ -550,11 +550,7 @@
       "en_ah_per_hour": 72.5,
       "battery_options": [
         {
-          "ah": 302,
-          "reserve_pct": 0.05
-        },
-        {
-          "ah": 604,
+          "ah": 420,
           "reserve_pct": 0.05
         }
       ],
@@ -580,11 +576,19 @@
       "en_ah_per_hour": 83.33333333333333,
       "battery_options": [
         {
-          "ah": 456,
+          "ah": 315,
           "reserve_pct": 0.05
         },
         {
-          "ah": 604,
+          "ah": 420,
+          "reserve_pct": 0.05
+        },
+        {
+          "ah": 525,
+          "reserve_pct": 0.05
+        },
+        {
+          "ah": 630,
           "reserve_pct": 0.05
         }
       ],
@@ -638,11 +642,7 @@
       "en_ah_per_hour": 102.08333333333333,
       "battery_options": [
         {
-          "ah": 456,
-          "reserve_pct": 0.05
-        },
-        {
-          "ah": 604,
+          "ah": 525,
           "reserve_pct": 0.05
         }
       ],
@@ -667,11 +667,15 @@
       "en_ah_per_hour": 112.5,
       "battery_options": [
         {
-          "ah": 456,
+          "ah": 420,
           "reserve_pct": 0.05
         },
         {
-          "ah": 604,
+          "ah": 525,
+          "reserve_pct": 0.05
+        },
+        {
+          "ah": 630,
           "reserve_pct": 0.05
         }
       ],
@@ -696,11 +700,19 @@
       "en_ah_per_hour": 80,
       "battery_options": [
         {
-          "ah": 302,
+          "ah": 300,
           "reserve_pct": 0.05
         },
         {
-          "ah": 604,
+          "ah": 420,
+          "reserve_pct": 0.05
+        },
+        {
+          "ah": 525,
+          "reserve_pct": 0.05
+        },
+        {
+          "ah": 630,
           "reserve_pct": 0.05
         }
       ],
@@ -1023,14 +1035,6 @@
       "voltage_v": 48,
       "en_ah_per_hour": 58.958333,
       "battery_options": [
-        {
-          "ah": 300,
-          "reserve_pct": 0.05
-        },
-        {
-          "ah": 420,
-          "reserve_pct": 0.05
-        },
         {
           "ah": 630,
           "reserve_pct": 0.05
