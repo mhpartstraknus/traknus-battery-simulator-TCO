@@ -488,8 +488,9 @@
       var batteryOptions=spec.battery_options||[];
       html+='<div class="field" style="margin-top:15px"><label>'+tr("4 · Pilih kapasitas untuk dibandingkan","4 · Choose capacities to compare")+'</label><div class="caps">'+batteryOptions.map(function(b){var selected=t.batteries.indexOf(b.ah)>=0;return '<button class="cap '+(selected?"selected":"")+'" data-act="battery" data-slot="'+slot+'" data-value="'+b.ah+'"><span class="checkmark"></span>'+fmtNum(b.ah)+' Ah</button>';}).join("")+'</div><p class="sub" style="margin-top:7px">'+tr("Klik satu atau beberapa kapasitas. Grafik nanti membandingkan baterai yang dicentang.","Select one or more capacities. The chart will compare the checked batteries.")+'</p></div>';
       if(spec.catalog_note) html+='<div class="inline-note" style="margin-top:10px">'+tr("Acuan RRE: kapasitas bergantung pada kompartemen baterai. Cocokkan konfigurasi unit sebelum dipakai untuk rekomendasi customer.","RRE reference: battery capacity depends on the battery compartment. Confirm the truck configuration before making customer recommendations.")+'</div>';
-      var chargers=(spec.charger_options_a||[]).map(Number).filter(function(a){return a>0;});
-      html+='<div class="inline-note" style="margin-top:14px">'+(chargers.length?tr("Acuan pengisi daya pada data model: ","Charger reference in model data: ")+fmtNum(chargers[0])+" A ("+tr("ampere","amps")+"). "+tr("Arus ini dipakai saat kamu pilih Ya untuk waktu istirahat.","This current is used when you choose Yes for a break."):tr("Data arus pengisi daya tidak tercantum untuk model ini. Pilihan Ya saat istirahat tidak menambah daya pada simulasi.","Charger current is not listed for this model. Choosing Yes for a break will not add charge in the estimate."))+'</div>';
+      var capacityChargeRefs=batteryOptions.map(function(b){var ref=chargerRefForCapacity(spec,b,t);return fmtNum(b.ah)+" Ah: "+(ref?fmtNum(ref)+" A":tr("tidak tercantum","not listed"));});
+      var hasCapacityChargeRef=batteryOptions.some(function(b){return chargerRefForCapacity(spec,b,t)>0;});
+      html+='<div class="inline-note" style="margin-top:14px">'+(hasCapacityChargeRef?tr("Acuan Charge Ref per kapasitas: ","Charge Ref by battery capacity: ")+capacityChargeRefs.join(" · ")+". "+tr("Nilai ini dipakai saat kamu pilih Ya untuk waktu istirahat.","These values are used when you choose Yes for a break.")+" "+tr("Kapasitas di luar daftar memakai acuan model yang sudah ada.","Capacities outside this list use the existing model reference."):tr("Acuan Charge Ref tidak tercantum untuk kapasitas model ini. Pilihan Ya saat istirahat tidak menambah daya pada simulasi.","Charge Ref is not listed for this model capacity. Choosing Yes for a break will not add charge in the estimate."))+'</div>';
       html+='<div class="field" style="margin-top:16px"><label>'+tr("Truck Mode · pilihan di Excel","Truck mode · Excel choices")+'</label>'+modePicker(t,slot)+'</div>';
       html+='<div class="inline-note" style="margin-top:12px">'+fmtNum(spec.voltage_v)+' V · '+tr("acuan pemakaian","usage baseline")+' '+fmtNum(spec.en_ah_per_hour)+' Ah/h</div>';
       return html;
@@ -823,13 +824,21 @@
         return {truck:t,spec:spec,index:index};
       }).filter(function(c){return c.truck.model&&c.spec;});
     }
+    function chargerRefForCapacity(spec,battery,truck) {
+      var refs=CATALOG.charge_ref_by_capacity_a||{};
+      var mapped=Number(refs[String(Number(battery.ah))]||0);
+      if(mapped>0) return mapped;
+      var existing=truck&&truck.charger!==null?Number(truck.charger):0;
+      if(existing>0) return existing;
+      return (spec.charger_options_a||[]).map(Number).filter(function(a){return a>0;})[0]||0;
+    }
     function simulate(config,battery) {
       var t=config.truck,spec=config.spec;
       var usable=battery.ah*(1-(battery.reserve_pct||0));
       var modeFactor=Number((spec.power_modes||{})[t.mode]||1);
       var intensityFactor=Number(CATALOG.intensity_factors[selectedIntensity(t)]);
       var draw=spec.en_ah_per_hour*modeFactor*intensityFactor*liftFactorFor(t,spec);
-      var charger=Number(t.charger===null?((spec.charger_options_a||[])[0]||0):t.charger);
+      var charger=chargerRefForCapacity(spec,battery,t);
       var chargeRate=Math.min(Number(battery.ah),charger)*Number(CATALOG.charge_efficiency||1);
       var windows=[];
       for(var i=0;i<state.shiftCount;i++) {
@@ -953,9 +962,10 @@
       }
       var truckRows=configs.map(function(c){
         var t=c.truck,spec=c.spec;
-        var selected=(spec.battery_options||[]).filter(function(b){return t.batteries.indexOf(b.ah)>=0;}).map(function(b){return fmtNum(b.ah)+" Ah";}).join(", ");
-        var charger=Number(t.charger===null?((spec.charger_options_a||[])[0]||0):t.charger);
-        var chargerText=charger?fmtNum(charger)+" A":tr("Tidak tercantum","Not listed");
+        var selectedBatteries=(spec.battery_options||[]).filter(function(b){return t.batteries.indexOf(b.ah)>=0;});
+        var selected=selectedBatteries.map(function(b){return fmtNum(b.ah)+" Ah";}).join(", ");
+        var chargerText=selectedBatteries.map(function(b){var ref=chargerRefForCapacity(spec,b,t);return fmtNum(b.ah)+" Ah: "+(ref?fmtNum(ref)+" A":tr("tidak tercantum","not listed"));}).join("; ");
+        if(!chargerText) chargerText=tr("Tidak tercantum","Not listed");
         return "<tr><td>"+esc(t.name)+"</td><td>"+esc(t.type||"")+" · "+esc(spec.model)+"</td><td>"+esc(modeName(t.mode))+"</td><td>"+esc(intensityName(selectedIntensity(t)))+"</td><td>"+esc(liftName(selectedLift(t,spec)))+"</td><td>"+esc(selected)+"</td><td>"+chargerText+"</td></tr>";
       });
       return '<section class="panel report-summary"><div class="panel-head"><div><h2>'+tr("Ringkasan konfigurasi","Simulation details")+'</h2><p class="sub">'+tr("Jadwal dan pilihan forklift yang ikut disimpan di laporan.","Shift schedule and forklift choices included in the report.")+'</p></div></div><div class="stat-grid"><article class="stat"><div class="stat-label">'+tr("Target jam kerja harian","Daily workday target")+'</div><div class="stat-value">'+fmtHours(state.workdayHours)+' '+tr("jam","hours")+'</div></article></div><h3>'+tr("Jadwal shift dan istirahat","Shift and break schedule")+'</h3><div class="report-table-wrap"><table class="report-table"><thead><tr><th>'+tr("Shift","Shift")+'</th><th>'+tr("Mulai","Start")+'</th><th>'+tr("Istirahat dan pengisian daya","Break and charging")+'</th></tr></thead><tbody>'+shiftRows.join("")+'</tbody></table></div><h3 style="margin-top:18px">'+tr("Forklift dan baterai","Forklift and battery")+'</h3><div class="report-table-wrap"><table class="report-table"><thead><tr><th>'+tr("Unit","Unit")+'</th><th>'+tr("Tipe dan model","Type and model")+'</th><th>'+tr("Mode forklift","Truck mode")+'</th><th>'+tr("Intensitas kerja","Work intensity")+'</th><th>'+tr("Ketinggian angkat","Lift height")+'</th><th>'+tr("Kapasitas","Capacities")+'</th><th>'+tr("Acuan pengisi daya","Charger ref.")+'</th></tr></thead><tbody>'+truckRows.join("")+'</tbody></table></div></section>';
