@@ -194,7 +194,7 @@
     .tco-result-card .stat-value {font-size:1.45rem;overflow-wrap:anywhere}
     .tco-comparison-title {margin:16px 0 10px;text-align:center}
     .tco-table {width:100%;border-collapse:collapse;margin-top:12px}
-    .tco-table th,.tco-table td {padding:10px 12px;border:1px solid var(--line);text-align:right;vertical-align:top}
+    .tco-table th,.tco-table td {padding:10px 12px;border:1px solid var(--line);text-align:center;vertical-align:top}
     .tco-table td:first-child {text-align:left}
     .tco-table thead th {background:var(--panel-soft);text-align:center}
     .tco-table td strong {font-size:1.02rem}
@@ -235,6 +235,7 @@
     .print-hint {color:var(--muted);font-size:.84rem;margin-top:7px}
     .button-row {display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:11px;margin-top:17px}
     .module-back-row {display:flex;justify-content:flex-start;margin:18px 0 0}
+    .analysis-action-notes {margin-top:17px}
     .button-group {display:flex;gap:9px;flex-wrap:wrap}
     .error {color:#ad272f;font-weight:700;margin-top:9px}
     .conditions {display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
@@ -963,12 +964,15 @@
       var truckRows=configs.map(function(c){
         var t=c.truck,spec=c.spec;
         var selectedBatteries=(spec.battery_options||[]).filter(function(b){return t.batteries.indexOf(b.ah)>=0;});
-        var selected=selectedBatteries.map(function(b){return fmtNum(b.ah)+" Ah";}).join(", ");
-        var chargerText=selectedBatteries.map(function(b){var ref=chargerRefForCapacity(spec,b,t);return fmtNum(b.ah)+" Ah: "+(ref?fmtNum(ref)+" A":tr("tidak tercantum","not listed"));}).join("; ");
-        if(!chargerText) chargerText=tr("Tidak tercantum","Not listed");
-        return "<tr><td>"+esc(t.name)+"</td><td>"+esc(t.type||"")+" · "+esc(spec.model)+"</td><td>"+esc(modeName(t.mode))+"</td><td>"+esc(intensityName(selectedIntensity(t)))+"</td><td>"+esc(liftName(selectedLift(t,spec)))+"</td><td>"+esc(selected)+"</td><td>"+chargerText+"</td></tr>";
-      });
-      return '<section class="panel report-summary"><div class="panel-head"><div><h2>'+tr("Ringkasan konfigurasi","Simulation details")+'</h2><p class="sub">'+tr("Jadwal dan pilihan forklift yang ikut disimpan di laporan.","Shift schedule and forklift choices included in the report.")+'</p></div></div><div class="stat-grid"><article class="stat"><div class="stat-label">'+tr("Target jam kerja harian","Daily workday target")+'</div><div class="stat-value">'+fmtHours(state.workdayHours)+' '+tr("jam","hours")+'</div></article></div><h3>'+tr("Jadwal shift dan istirahat","Shift and break schedule")+'</h3><div class="report-table-wrap"><table class="report-table"><thead><tr><th>'+tr("Shift","Shift")+'</th><th>'+tr("Mulai","Start")+'</th><th>'+tr("Istirahat dan pengisian daya","Break and charging")+'</th></tr></thead><tbody>'+shiftRows.join("")+'</tbody></table></div><h3 style="margin-top:18px">'+tr("Forklift dan baterai","Forklift and battery")+'</h3><div class="report-table-wrap"><table class="report-table"><thead><tr><th>'+tr("Unit","Unit")+'</th><th>'+tr("Tipe dan model","Type and model")+'</th><th>'+tr("Mode forklift","Truck mode")+'</th><th>'+tr("Intensitas kerja","Work intensity")+'</th><th>'+tr("Ketinggian angkat","Lift height")+'</th><th>'+tr("Kapasitas","Capacities")+'</th><th>'+tr("Acuan pengisi daya","Charger ref.")+'</th></tr></thead><tbody>'+truckRows.join("")+'</tbody></table></div></section>';
+        var rowBatteries=selectedBatteries.length?selectedBatteries:[null];
+        return rowBatteries.map(function(b){
+          var capacityText=b?fmtNum(b.ah)+" Ah":tr("Belum dipilih","Not selected");
+          var ref=b?chargerRefForCapacity(spec,b,t):0;
+          var chargerText=ref?fmtNum(ref)+" A":tr("Tidak tercantum","Not listed");
+          return "<tr><td>"+esc(t.name)+"</td><td>"+esc(t.type||"")+" · "+esc(spec.model)+"</td><td>"+esc(modeName(t.mode))+"</td><td>"+esc(intensityName(selectedIntensity(t)))+"</td><td>"+esc(liftName(selectedLift(t,spec)))+"</td><td>"+esc(capacityText)+"</td><td>"+esc(chargerText)+"</td></tr>";
+        }).join("");
+      }).join("");
+      return '<section class="panel report-summary"><div class="panel-head"><div><h2>'+tr("Ringkasan konfigurasi","Simulation details")+'</h2><p class="sub">'+tr("Jadwal dan pilihan forklift yang ikut disimpan di laporan.","Shift schedule and forklift choices included in the report.")+'</p></div></div><div class="stat-grid"><article class="stat"><div class="stat-label">'+tr("Target jam kerja harian","Daily workday target")+'</div><div class="stat-value">'+fmtHours(state.workdayHours)+' '+tr("jam","hours")+'</div></article></div><h3>'+tr("Jadwal shift dan istirahat","Shift and break schedule")+'</h3><div class="report-table-wrap"><table class="report-table"><thead><tr><th>'+tr("Shift","Shift")+'</th><th>'+tr("Mulai","Start")+'</th><th>'+tr("Istirahat dan pengisian daya","Break and charging")+'</th></tr></thead><tbody>'+shiftRows.join("")+'</tbody></table></div><h3 style="margin-top:18px">'+tr("Forklift dan baterai","Forklift and battery")+'</h3><div class="report-table-wrap"><table class="report-table"><thead><tr><th>'+tr("Unit","Unit")+'</th><th>'+tr("Tipe dan model","Type and model")+'</th><th>'+tr("Mode forklift","Truck mode")+'</th><th>'+tr("Intensitas kerja","Work intensity")+'</th><th>'+tr("Ketinggian angkat","Lift height")+'</th><th>'+tr("Kapasitas baterai","Battery capacity")+'</th><th>'+tr("Charge Ref (A)","Charge Ref (A)")+'</th></tr></thead><tbody>'+truckRows+'</tbody></table></div></section>';
     }
     function printReport(configs,results) {
       var generatedAt=new Date(),locale=state.lang==="id"?"id-ID":"en-GB",date=new Intl.DateTimeFormat(locale,{day:"numeric",month:"long",year:"numeric"}).format(generatedAt),time=new Intl.DateTimeFormat(locale,{hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).format(generatedAt);
@@ -1086,14 +1090,14 @@
       var html=progressView(4);
       html+='<div class="button-row" style="margin:0 0 14px"><div><div class="eyebrow-small">'+tr("Analisis operasional","Operating analysis")+'</div><h2 style="margin:0;font-size:1.45rem">'+tr("Lihat perubahan sisa baterai","See the battery level change")+'</h2></div><button class="secondary" data-act="start-over">↺ '+tr("Kembali ke awal","Return to start")+'</button></div>';
       html+='<section class="panel"><div class="panel-head"><div><h2>'+tr("Kondisi kerja tiap forklift","Work conditions for each forklift")+'</h2><p class="sub">'+tr("Atur intensitas kerja dan tinggi angkat secara terpisah untuk setiap forklift, seperti di makro Excel.","Set work intensity and lift height separately for each forklift, as in the Excel macro.")+'</p></div></div><div class="conditions">'+configs.map(truckConditionInputs).join("")+'</div></section>';
-      if(!results.length) return html+'<section class="panel"><div class="inline-note">'+tr("Belum ada kapasitas yang dipilih. Kembali dan pilih minimal satu baterai.","No battery capacity selected. Go back and select at least one battery.")+'</div></section>';
+      if(!results.length) return html+'<section class="panel"><div class="inline-note">'+tr("Belum ada kapasitas yang dipilih. Kembali dan pilih minimal satu baterai.","No battery capacity selected. Go back and select at least one battery.")+'</div></section><div class="module-back-row">'+menuBackButtonHtml()+'</div>';
       html+=reportSummary(configs);
       html+='<section class="panel"><div class="panel-head"><div><h2><strong>'+tr("Visualisasi","Visualization")+'</strong> · '+tr("Sisa baterai sepanjang jadwal","Battery remaining through the schedule")+'</h2><p class="sub">'+tr("Perkiraan sisa baterai dari awal hingga akhir jadwal kerja.","Estimated battery remaining from the start to the end of the work schedule.")+'</p></div><span class="info-pill">'+state.shiftCount+' '+shiftWord(state.shiftCount)+' · '+fmtHours(state.workdayHours)+' '+tr("jam/hari","hours/day")+'</span></div>';
       html+=visualResultPicker(results,state.visualResultKeys);
       html+='<div class="chart-wrap">'+chartSvg(visibleResults)+'</div><div class="legend">'+visibleResults.map(function(r){return '<div class="legend-item"><span class="legend-line" style="border-color:'+resultColor(r)+';border-top-style:'+resultDashStyle(r)+'"></span>'+esc(r.label)+'</div>';}).join("")+'</div>';
       html+='<p class="chart-caption">'+tr("Warna garis menandai forklift; pola garis membedakan kapasitas baterai.","Line colors identify forklifts; line patterns distinguish battery capacities.")+'</p>'+breakTimeline()+'</section>';
       html+='<section class="panel"><div class="panel-head"><div><h2>'+tr("Ringkasan tiap pilihan baterai","Summary for each battery option")+'</h2><p class="sub">'+tr("Lihat sisa baterai di akhir jadwal dan perkiraan waktu operasi tanpa henti.","See the remaining battery at the end of the schedule and estimated nonstop runtime.")+'</p></div></div><div class="stat-grid">'+visibleResults.map(function(r){return '<article class="stat"><div class="stat-label">'+esc(r.label)+'</div><div class="stat-value">'+fmtNum(r.end)+'% <span style="font-size:.72rem;color:var(--muted)">'+tr("Sisa akhir jadwal","remaining at end")+'</span></div><div class="sub" style="margin-top:6px">'+tr("Operasi tanpa henti","Nonstop")+': <strong>'+fmtNum(r.runtime)+' '+tr("jam","hours")+'</strong></div></article>';}).join("")+'</div>';
-      html+='<div class="button-row"><div><div class="sub">'+tr("Estimasi mengikuti faktor dari data model; kondisi lapangan dapat berbeda.","Estimates follow the model data; actual results may vary with operating conditions.")+'</div><div class="print-hint">'+(isIOS()?tr("Di iPhone/iPad: pada pratinjau cetak, ketuk Share lalu Save to Files.","On iPhone/iPad: in print preview, tap Share, then Save to Files."):tr("Pilih “Simpan sebagai PDF” pada jendela cetak.","Choose “Save as PDF” in the print window."))+'</div><div class="print-hint">'+tr("Pilih aplikasi berbagi yang tersedia, lalu periksa penerima dan tekan Kirim.","Choose an available sharing app, then check the recipient and press Send.")+'</div></div><div class="button-group"><button class="secondary" data-act="back-trucks">← '+tr("Ubah pilihan forklift","Edit forklift choices")+'</button><button class="primary" data-act="print">⌑ '+tr("Cetak / simpan PDF","Print / save PDF")+'</button><button class="secondary" data-act="email-report"><svg class="share-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.7 10.7l6.6-4.4M8.7 13.3l6.6 4.4"></path></svg>'+tr("Bagikan","Share")+'</button></div></div></section>';
+      html+='<div class="analysis-action-notes"><div class="sub">'+tr("Estimasi mengikuti faktor dari data model; kondisi lapangan dapat berbeda.","Estimates follow the model data; actual results may vary with operating conditions.")+'</div><div class="print-hint">'+(isIOS()?tr("Di iPhone/iPad: pada pratinjau cetak, ketuk Share lalu Save to Files.","On iPhone/iPad: in print preview, tap Share, then Save to Files."):tr("Pilih “Simpan sebagai PDF” pada jendela cetak.","Choose “Save as PDF” in the print window."))+'</div><div class="print-hint">'+tr("Pilih aplikasi berbagi yang tersedia, lalu periksa penerima dan tekan Kirim.","Choose an available sharing app, then check the recipient and press Send.")+'</div></div><div class="button-row analysis-action-row">'+menuBackButtonHtml()+'<div class="button-group"><button class="secondary" data-act="back-trucks">← '+tr("Ubah pilihan forklift","Edit forklift choices")+'</button><button class="primary" data-act="print">⌑ '+tr("Cetak / simpan PDF","Print / save PDF")+'</button><button class="secondary" data-act="email-report"><svg class="share-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.7 10.7l6.6-4.4M8.7 13.3l6.6 4.4"></path></svg>'+tr("Bagikan","Share")+'</button></div></div></section>';
       html+=printReport(configs,visibleResults);
       return html;
     }
@@ -1111,7 +1115,7 @@
         (state.screen==="conditions"?conditionsScreen():
         (state.screen==="schedule"?scheduleScreen():
         (state.screen==="trucks"?truckScreen():analysisScreen())))));
-      if(state.screen==="analysis") app.insertAdjacentHTML("beforeend",'<div class="module-back-row">'+menuBackButtonHtml()+'</div>');
+
     }
     function validSetup() {
       var configs=state.trucks;
