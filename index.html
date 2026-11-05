@@ -208,7 +208,7 @@
     .share-icon {width:18px;height:18px;vertical-align:-4px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;margin-right:6px}
     .print-hint {color:var(--muted);font-size:.84rem;margin-top:7px}
     .button-row {display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:11px;margin-top:17px}
-    .module-back-row {display:flex;justify-content:flex-start;margin:0 0 12px}
+    .module-back-row {display:flex;justify-content:flex-start;margin:18px 0 0}
     .button-group {display:flex;gap:9px;flex-wrap:wrap}
     .error {color:#ad272f;font-weight:700;margin-top:9px}
     .conditions {display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
@@ -1023,7 +1023,7 @@
         (state.screen==="conditions"?conditionsScreen():
         (state.screen==="schedule"?scheduleScreen():
         (state.screen==="trucks"?truckScreen():analysisScreen())))));
-      if(["conditions","schedule","trucks","analysis"].indexOf(state.screen)>=0) app.innerHTML='<div class="module-back-row"><button class="secondary" type="button" data-act="back-modules">'+tr("Kembali ke menu","Back to menu")+'</button></div>'+app.innerHTML;
+      if(["conditions","schedule","trucks","analysis"].indexOf(state.screen)>=0) app.insertAdjacentHTML("beforeend",'<div class="module-back-row"><button class="secondary" type="button" data-act="back-modules">'+tr("Kembali ke menu","Back to menu")+'</button></div>');
     }
     function validSetup() {
       var configs=state.trucks;
