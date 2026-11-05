@@ -566,6 +566,16 @@
     function tcoMoney(n) {
       return 'Rp '+new Intl.NumberFormat(state.lang==="id"?"id-ID":"en-US",{maximumFractionDigits:0}).format(Math.round(n));
     }
+    function tcoPercent(value) {
+      var formatted=new Intl.NumberFormat(state.lang==="id"?"id-ID":"en-US",{maximumFractionDigits:0}).format(Math.abs(value));
+      return (value<0?"−":"")+formatted+"%";
+    }
+    function tcoSignedMoney(value) {
+      return (value<0?"−":"")+tcoMoney(Math.abs(value));
+    }
+    function tcoKwh(value) {
+      return new Intl.NumberFormat(state.lang==="id"?"id-ID":"en-US",{minimumFractionDigits:2,maximumFractionDigits:2}).format(value);
+    }
     function tcoPriceInputValue(batteryKey) {
       var raw=String(state.tco[batteryKey].price).replace(/[^0-9]/g,"");
       if(!raw)return "";
@@ -579,7 +589,7 @@
       var depreciation=price/(lifeYears*12);
       var energyPerCycle=voltage*capacity*0.8/efficiency/1000;
       var charging=energyPerCycle*1140*cycles;
-      return {voltage:voltage,capacity:capacity,price:price,lifeYears:lifeYears,efficiency:efficiency,cycles:cycles,maintenance:maintenance,risk:risk,depreciation:depreciation,energyPerCycle:energyPerCycle,charging:charging,total:depreciation+charging+maintenance+risk,nameplateKwh:voltage*capacity/1000,costPerKwh:price/(voltage*capacity/1000),fumes:risk>0};
+      return {voltage:voltage,capacity:capacity,price:price,lifeYears:lifeYears,efficiency:efficiency,cycles:cycles,maintenance:maintenance,risk:risk,depreciation:depreciation,energyPerCycle:energyPerCycle,chargingPerCycle:energyPerCycle*1140,charging:charging,total:depreciation+charging+maintenance+risk,nameplateKwh:voltage*capacity/1000,costPerKwh:price/(voltage*capacity/1000),fumes:risk>0};
     }
     function tcoResults() {
       function values(key) {
@@ -619,30 +629,42 @@
       var lithiumLabel=tr("Traknus Lithium (TCO) · 5 tahun","Traknus Lithium (TCO) · 5 years");
       return '<section class="tco-projection"><div class="tco-projection-head"><div><h3>'+tr("Proyeksi biaya kumulatif 5 tahun","5-year cumulative cost projection")+'</h3><p class="sub">'+tr("Akumulasi biaya dari estimasi TCO bulanan saat ini.","Cumulative cost based on the current monthly TCO estimate.")+'</p></div></div><div class="tco-projection-chart-wrap"><svg class="tco-projection-chart" viewBox="0 0 760 320" role="img" aria-label="'+esc(tr("Grafik biaya kumulatif Lead Acid dan Traknus Lithium dari tahun nol hingga tahun kelima.","Cumulative cost chart for Lead Acid and Traknus Lithium from year zero through year five."))+'"><title>'+tr("Proyeksi biaya kumulatif 5 tahun","5-year cumulative cost projection")+'</title><desc>'+tr("Proyeksi biaya tahunan memakai estimasi TCO bulanan saat ini.","Yearly projection uses the current monthly TCO estimate.")+'</desc>'+grid+'<polyline points="'+points(results.lead.total)+'" fill="none" stroke="var(--red)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><polyline points="'+points(results.lithium.total)+'" fill="none" stroke="var(--blue)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>'+Array.from({length:6},function(_,yr){return '<circle cx="'+x(yr).toFixed(1)+'" cy="'+y(results.lead.total*12*yr).toFixed(1)+'" r="4.5" fill="var(--panel)" stroke="var(--red)" stroke-width="3"><title>'+tr("Lead Acid (TCO) · tahun ","Lead Acid (TCO) · year ")+yr+': '+tcoMoney(results.lead.total*12*yr)+'</title></circle><circle cx="'+x(yr).toFixed(1)+'" cy="'+y(results.lithium.total*12*yr).toFixed(1)+'" r="4.5" fill="var(--panel)" stroke="var(--blue)" stroke-width="3"><title>'+tr("Traknus Lithium (TCO) · tahun ","Traknus Lithium (TCO) · year ")+yr+': '+tcoMoney(results.lithium.total*12*yr)+'</title></circle>';}).join("")+years+'<text x="'+(left+plotW/2)+'" y="306" text-anchor="middle" fill="var(--muted)" font-size="13">'+tr("Tahun pemakaian","Year in use")+'</text><text transform="translate(18 '+(top+plotH/2)+') rotate(-90)" text-anchor="middle" fill="var(--muted)" font-size="13">'+tr("Biaya kumulatif","Cumulative cost")+'</text></svg></div><div class="tco-projection-legend"><span><i class="tco-legend-dot lead"></i>'+leadLabel+'</span><span><i class="tco-legend-dot lithium"></i>'+lithiumLabel+'</span></div><div class="tco-projection-summary"><div><span>'+tr("Lead Acid · total 5 tahun","Lead Acid · 5-year total")+'</span><strong>'+tcoMoney(leadFive)+'</strong></div><div><span>'+tr("Traknus Lithium · total 5 tahun","Traknus Lithium · 5-year total")+'</span><strong>'+tcoMoney(lithiumFive)+'</strong></div><div class="'+(saved>=0?"saving":"higher-cost")+'"><span>'+(saved>=0?tr("Perkiraan selisih biaya 5 tahun","Estimated 5-year savings"):tr("Selisih biaya 5 tahun","5-year cost difference"))+'</span><strong>'+(saved<0?"−":"")+tcoMoney(Math.abs(saved))+'</strong></div></div><p class="tco-projection-note">'+tr("Dihitung dari estimasi TCO bulanan × 60 bulan; biaya bulanan dianggap tetap.","Calculated from monthly TCO × 60 months; monthly costs are assumed to stay constant.")+'</p></section>';
     }
+    function tcoTableRows(results) {
+      var lead=results.lead,lithium=results.lithium,saving=lead.total-lithium.total,percent=saving/lead.total*100;
+      return [
+        [tr("Voltage (V)","Voltage (V)"),fmtNum(lead.voltage),fmtNum(lithium.voltage)],
+        [tr("Capacity (Ah)","Capacity (Ah)"),fmtNum(lead.capacity),fmtNum(lithium.capacity)],
+        [tr("Harga (Rp)","Price (Rp)"),tcoMoney(lead.price),tcoMoney(lithium.price)],
+        [tr("End of Life (tahun)","End of life (years)"),fmtNum(lead.lifeYears),fmtNum(lithium.lifeYears)],
+        [tr("Efisiensi charging","Charging efficiency"),tcoPercent(lead.efficiency*100),tcoPercent(lithium.efficiency*100)],
+        [tr("Depreciation (Rp/bulan)","Depreciation (Rp/month)"),tcoMoney(lead.depreciation),tcoMoney(lithium.depreciation)],
+        [tr("Energi per siklus (kWh)","Energy per cycle (kWh)"),tcoKwh(lead.energyPerCycle),tcoKwh(lithium.energyPerCycle)],
+        [tr("Charging cost (Rp/siklus)","Charging cost (Rp/cycle)"),tcoMoney(lead.chargingPerCycle),tcoMoney(lithium.chargingPerCycle)],
+        [tr("Total siklus / bulan","Total cycles / month"),fmtNum(lead.cycles),fmtNum(lithium.cycles)],
+        [tr("Total charging cost (Rp/bulan)","Total charging cost (Rp/month)"),tcoMoney(lead.charging),tcoMoney(lithium.charging)],
+        [tr("Maintenance (Rp/bulan)","Maintenance (Rp/month)"),tcoMoney(lead.maintenance),tcoMoney(lithium.maintenance)],
+        [tr("Risk of injury (Rp/bulan)","Risk of injury (Rp/month)"),tcoMoney(lead.risk),tcoMoney(lithium.risk)],
+        [tr("Risk of acid fumes","Risk of acid fumes"),tr("Ada","Yes"),tr("Tidak Ada","No")],
+        [tr("TOTAL TCO (Rp/bulan)","TOTAL TCO (Rp/month)"),tcoMoney(lead.total),tcoMoney(lithium.total)],
+        [tr("Kapasitas energi nameplate (kWh)","Nameplate energy capacity (kWh)"),tcoKwh(lead.nameplateKwh),tcoKwh(lithium.nameplateKwh)],
+        [tr("Harga per kWh kapasitas (Rp/kWh)","Price per kWh of capacity (Rp/kWh)"),tcoMoney(lead.costPerKwh),tcoMoney(lithium.costPerKwh)],
+        [tr("Penghematan vs Lead Acid (Rp/bulan)","Savings vs Lead Acid (Rp/month)"),"—",tcoSignedMoney(saving)],
+        [tr("Penghematan vs Lead Acid (%)","Savings vs Lead Acid (%)"),"—",tcoPercent(percent)]
+      ];
+    }
     function tcoPrintReport(results) {
       var now=new Date(),locale=state.lang==="id"?"id-ID":"en-GB";
       var date=new Intl.DateTimeFormat(locale,{day:"numeric",month:"long",year:"numeric"}).format(now);
       var time=new Intl.DateTimeFormat(locale,{hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).format(now);
       var difference=results.lead.total-results.lithium.total;
       var differenceLabel=difference>=0?tr("Estimasi penghematan bulanan dibanding Lead Acid: ","Estimated monthly savings vs Lead Acid: "):tr("Biaya Lithium lebih tinggi per bulan sebesar: ","Lithium monthly cost is higher by: ");
-      var differenceText=tcoMoney(Math.abs(difference))+" ("+fmtNum(Math.abs(difference/results.lead.total*100))+"%)";
-      var rows=[
-        [tr("Tegangan","Voltage"),fmtNum(results.lead.voltage)+" V",fmtNum(results.lithium.voltage)+" V"],
-        [tr("Kapasitas baterai","Battery capacity"),fmtNum(results.lead.capacity)+" Ah",fmtNum(results.lithium.capacity)+" Ah"],
-        [tr("Harga baterai","Battery price"),tcoMoney(results.lead.price),tcoMoney(results.lithium.price)],
-        [tr("Perkiraan masa pakai","Estimated service life"),fmtNum(results.lead.lifeYears)+" "+tr("tahun","years"),fmtNum(results.lithium.lifeYears)+" "+tr("tahun","years")],
-        [tr("Penyusutan per bulan","Depreciation per month"),tcoMoney(results.lead.depreciation),tcoMoney(results.lithium.depreciation)],
-        [tr("Biaya pengisian daya per bulan","Charging cost per month"),tcoMoney(results.lead.charging),tcoMoney(results.lithium.charging)],
-        [tr("Perawatan dan risiko per bulan","Maintenance and risk per month"),tcoMoney(results.lead.maintenance+results.lead.risk),tcoMoney(results.lithium.maintenance+results.lithium.risk)],
-        [tr("Biaya per kWh kapasitas nominal","Cost per nominal kWh"),tcoMoney(results.lead.costPerKwh),tcoMoney(results.lithium.costPerKwh)],
-        [tr("Risiko asap asam","Risk of acid fumes"),tr("Ada","Yes"),tr("Tidak ada","No")],
-        [tr("Total biaya kepemilikan per bulan","Total ownership cost per month"),'<strong>'+tcoMoney(results.lead.total)+'</strong>','<strong>'+tcoMoney(results.lithium.total)+'</strong>']
-      ];
+      var differenceText=tcoMoney(Math.abs(difference))+" ("+tcoPercent(Math.abs(difference/results.lead.total*100))+")";
+      var rows=tcoTableRows(results).map(function(row,i){return i===13?[row[0],'<strong>'+row[1]+'</strong>','<strong>'+row[2]+'</strong>']:row;});
       return '<article class="print-report"><header class="print-header"><img class="print-logo" src="traknus_lithium_logo.png" alt="Traknus"><div class="print-date">'+tr("Tanggal & waktu laporan","Report date & time")+'<br><strong>'+date+' · '+time+'</strong></div></header><h1>'+tr("Total Biaya Kepemilikan (TCO)","Total Cost of Ownership (TCO)")+'</h1><p class="print-lead">'+tr("Perbandingan estimasi biaya baterai Lead Acid dan Traknus Lithium.","Estimated cost comparison for Lead Acid and Traknus Lithium batteries.")+'</p><section><h2>'+tr("Data customer","Customer details")+'</h2><div class="print-facts"><div class="print-fact"><span>'+tr("Perusahaan","Company")+'</span><strong>'+esc(state.customer.company)+'</strong></div><div class="print-fact"><span>'+tr("Lokasi kerja","Work location")+'</span><strong>'+esc(state.customer.location)+'</strong></div><div class="print-fact"><span>'+tr("Sales person","Salesperson")+'</span><strong>'+esc(state.customer.salesperson)+'</strong></div></div></section><section><h2>'+tr("Perbandingan biaya bulanan","Monthly cost comparison")+'</h2><table class="print-table"><thead><tr><th>'+tr("Komponen biaya","Cost item")+'</th><th>Lead Acid (TCO)</th><th>Traknus Lithium (TCO)</th></tr></thead><tbody>'+rows.map(function(r){return '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td></tr>';}).join("")+'</tbody></table><p>'+differenceLabel+'<strong>'+differenceText+'</strong></p></section>'+tcoProjectionSection(results)+'<p class="print-note">'+tr("Perhitungan mengikuti asumsi dan rumus workbook TCO yang diberikan.","Calculations follow the assumptions and formulas in the supplied TCO workbook.")+'</p></article>';
     }
     function tcoImageBlob(results) {
       return new Promise(function(resolve,reject){
-        var canvas=document.createElement("canvas"),scale=2,W=1200,H=1440;
+        var canvas=document.createElement("canvas"),scale=2,W=1200,H=1620;
         canvas.width=W*scale;canvas.height=H*scale;
         var ctx=canvas.getContext("2d");ctx.scale(scale,scale);
         var ink="#20313d",muted="#586a73",line="#d8e0e0",soft="#f1f5f6",red="#cf3740",blue="#2268a7",green="#347b65",amber="#9a5e14";
@@ -716,30 +738,19 @@
         var projSaving=projLead5-projLithium5,metricY=811,metricGap=10,metricW=(W-108-2*metricGap)/3;
         [[tr("Lead Acid · total 5 tahun","Lead Acid · 5-year total"),tcoMoney(projLead5),red],[tr("Lithium · total 5 tahun","Lithium · 5-year total"),tcoMoney(projLithium5),blue],[projSaving>=0?tr("Perkiraan penghematan 5 tahun","Estimated 5-year savings"):tr("Biaya Lithium lebih tinggi 5 tahun","Lithium cost is higher over 5 years"),(projSaving<0?"−":"")+tcoMoney(Math.abs(projSaving)),projSaving>=0?green:amber]].forEach(function(item,i){var mx=54+i*(metricW+metricGap);rect(mx,metricY,metricW,54,"#ffffff");ctx.strokeStyle=line;ctx.strokeRect(mx,metricY,metricW,54);write(item[0],mx+12,metricY+19,11,muted,"600",metricW-24);write(item[1],mx+12,metricY+43,16,item[2],"700",metricW-24);});
         write(tr("Proyeksi: estimasi TCO bulanan × 60 bulan; biaya bulanan dianggap tetap.","Projection: monthly TCO × 60 months; monthly costs are assumed constant."),54,881,13,muted,"400");
-        var x=54,y=900,totalW=W-108,labelW=440,colW=(totalW-labelW)/2,headH=46,rowH=41;
+        var x=54,y=900,totalW=W-108,labelW=440,colW=(totalW-labelW)/2,headH=46,rowH=35;
         rect(x,y,totalW,headH,"#e9eff2");
         write(tr("Komponen biaya","Cost item"),x+16,y+29,15,ink,"700",labelW-26);
         write("Lead Acid (TCO)",x+labelW+12,y+29,15,ink,"700",colW-20);
         write("Traknus Lithium (TCO)",x+labelW+colW+12,y+29,15,ink,"700",colW-20);
-        var rows=[
-          [tr("Tegangan","Voltage"),fmtNum(results.lead.voltage)+" V",fmtNum(results.lithium.voltage)+" V"],
-          [tr("Kapasitas baterai","Battery capacity"),fmtNum(results.lead.capacity)+" Ah",fmtNum(results.lithium.capacity)+" Ah"],
-          [tr("Harga baterai","Battery price"),tcoMoney(results.lead.price),tcoMoney(results.lithium.price)],
-          [tr("Masa pakai baterai","Battery service life"),fmtNum(results.lead.lifeYears)+" "+tr("tahun","years"),fmtNum(results.lithium.lifeYears)+" "+tr("tahun","years")],
-          [tr("Penyusutan per bulan","Depreciation per month"),tcoMoney(results.lead.depreciation),tcoMoney(results.lithium.depreciation)],
-          [tr("Biaya pengisian daya per bulan","Charging cost per month"),tcoMoney(results.lead.charging),tcoMoney(results.lithium.charging)],
-          [tr("Perawatan dan risiko per bulan","Maintenance and risk per month"),tcoMoney(results.lead.maintenance+results.lead.risk),tcoMoney(results.lithium.maintenance+results.lithium.risk)],
-          [tr("Biaya per kWh kapasitas nominal","Cost per nominal kWh"),tcoMoney(results.lead.costPerKwh),tcoMoney(results.lithium.costPerKwh)],
-          [tr("Risiko asap asam","Risk of acid fumes"),tr("Ada","Yes"),tr("Tidak ada","No")],
-          [tr("Total biaya kepemilikan per bulan","Total ownership cost per month"),tcoMoney(results.lead.total),tcoMoney(results.lithium.total)]
-        ];
+        var rows=tcoTableRows(results);
         rows.forEach(function(row,i){
           var rowY=y+headH+i*rowH;
-          rect(x,rowY,totalW,rowH,i===rows.length-1?"#f0f5f7":"#ffffff");
+          rect(x,rowY,totalW,rowH,i===13?"#f0f5f7":"#ffffff");
           rule(x,rowY+rowH,x+totalW,rowY+rowH,line);
-          write(row[0],x+16,rowY+29,14,ink,i===rows.length-1?"700":"400",labelW-28);
-          write(row[1],x+labelW+12,rowY+29,14,ink,i===rows.length-1?"700":"400",colW-22);
-          write(row[2],x+labelW+colW+12,rowY+29,14,ink,i===rows.length-1?"700":"400",colW-22);
+          write(row[0],x+16,rowY+29,14,ink,i===13?"700":"400",labelW-28);
+          write(row[1],x+labelW+12,rowY+29,14,ink,i===13?"700":"400",colW-22);
+          write(row[2],x+labelW+colW+12,rowY+29,14,ink,i===13?"700":"400",colW-22);
         });
         write(tr("Estimasi mengikuti asumsi perhitungan yang digunakan.","Estimate based on the assumptions used in the calculation."),54,H-24,13,muted,"400");
         canvas.toBlob(function(blob){if(blob)resolve(blob);else reject(new Error("Could not create TCO image"));},"image/png");
@@ -791,19 +802,8 @@
         var saving=results.lead.total-results.lithium.total,percent=saving/results.lead.total*100;
         var msg=saving>=0?tr("Estimasi penghematan per bulan dibanding Lead Acid","Estimated monthly savings vs Lead Acid"):tr("Biaya Lithium lebih tinggi per bulan dibanding Lead Acid","Lithium monthly cost is higher than Lead Acid");
         var savingsClass=saving>=0?"green-box":"alert-box";
-        var savingsValue=(saving<0?"−":"")+tcoMoney(Math.abs(saving))+" ("+fmtNum(Math.abs(percent))+"%)";
-        var rows=[
-          [tr("Tegangan","Voltage"),fmtNum(results.lead.voltage)+" V",fmtNum(results.lithium.voltage)+" V"],
-          [tr("Kapasitas","Capacity"),fmtNum(results.lead.capacity)+" Ah",fmtNum(results.lithium.capacity)+" Ah"],
-          [tr("Harga baterai","Battery price"),tcoMoney(results.lead.price),tcoMoney(results.lithium.price)],
-          [tr("Masa pakai baterai","Battery service life"),fmtNum(results.lead.lifeYears)+" "+tr("tahun","years"),fmtNum(results.lithium.lifeYears)+" "+tr("tahun","years")],
-          [tr("Penyusutan per bulan","Depreciation per month"),tcoMoney(results.lead.depreciation),tcoMoney(results.lithium.depreciation)],
-          [tr("Biaya pengisian daya per bulan","Charging cost per month"),tcoMoney(results.lead.charging),tcoMoney(results.lithium.charging)],
-          [tr("Perawatan + risiko per bulan","Maintenance + risk per month"),tcoMoney(results.lead.maintenance+results.lead.risk),tcoMoney(results.lithium.maintenance+results.lithium.risk)],
-          [tr("Biaya per kWh kapasitas nominal","Cost per nominal kWh"),tcoMoney(results.lead.costPerKwh),tcoMoney(results.lithium.costPerKwh)],
-          [tr("Risiko asap asam","Risk of acid fumes"),tr("Ada","Yes"),tr("Tidak ada","No")],
-          [tr("Total biaya kepemilikan per bulan","Total ownership cost per month"),'<strong>'+tcoMoney(results.lead.total)+'</strong>','<strong>'+tcoMoney(results.lithium.total)+'</strong>']
-        ];
+        var savingsValue=(saving<0?"−":"")+tcoMoney(Math.abs(saving))+" ("+tcoPercent(Math.abs(percent))+")";
+        var rows=tcoTableRows(results).map(function(row,i){return i===13?[row[0],'<strong>'+row[1]+'</strong>','<strong>'+row[2]+'</strong>']:row;});
         html+='<div class="tco-result-highlight"><article class="tco-result-card"><div class="stat-label">Lead Acid (TCO)</div><div class="stat-value">'+tcoMoney(results.lead.total)+'</div><div class="sub">'+tr("estimasi total per bulan","estimated total per month")+'</div></article><article class="tco-result-card primary-result"><div class="stat-label">Traknus Lithium (TCO)</div><div class="stat-value">'+tcoMoney(results.lithium.total)+'</div><div class="sub">'+tr("estimasi total per bulan","estimated total per month")+'</div></article></div><div class="'+savingsClass+'"><strong>'+msg+':</strong> '+savingsValue+'</div>'+tcoProjectionSection(results)+'<div class="report-table-wrap"><table class="tco-table"><thead><tr><th>'+tr("Komponen biaya","Cost item")+'</th><th>Lead Acid (TCO)</th><th>Traknus Lithium (TCO)</th></tr></thead><tbody>'+rows.map(function(r){return '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td></tr>';}).join("")+'</tbody></table></div><details class="tco-assumptions" open><summary>'+tr("Asumsi yang digunakan","Assumptions used in the calculation")+'</summary><div class="tco-assumptions-grid"><section class="tco-assumption-card"><h4>'+tr("Berlaku untuk keduanya","Shared assumptions")+'</h4><ul class="tco-assumption-list"><li>'+tr("Tarif listrik: Rp1.140 per kWh","Electricity price: Rp1,140 per kWh")+'</li><li>'+tr("Kedalaman pemakaian baterai: 80%","Battery depth of discharge: 80%")+'</li></ul></section><section class="tco-assumption-card"><h4>Lead Acid</h4><ul class="tco-assumption-list"><li>'+tr("Masa pakai: 2 tahun","Service life: 2 years")+'</li><li>'+tr("Efisiensi pengisian daya: 75%","Charging efficiency: 75%")+'</li><li>'+tr("Siklus pengisian daya: 50 per bulan","Charging cycles: 50 per month")+'</li><li>'+tr("Perawatan: Rp250.000 per bulan","Maintenance: Rp250,000 per month")+'</li><li>'+tr("Risiko: Rp1.500.000 per bulan","Risk cost: Rp1,500,000 per month")+'</li></ul></section><section class="tco-assumption-card"><h4>Traknus Lithium</h4><ul class="tco-assumption-list"><li>'+tr("Masa pakai: 5 tahun","Service life: 5 years")+'</li><li>'+tr("Efisiensi pengisian daya: 95%","Charging efficiency: 95%")+'</li><li>'+tr("Siklus pengisian daya: 25 per bulan","Charging cycles: 25 per month")+'</li><li>'+tr("Perawatan dan risiko: Rp0 per bulan","Maintenance and risk: Rp0 per month")+'</li></ul></section></div></details>';
         report=tcoPrintReport(results);
       }
