@@ -1145,5 +1145,11 @@
   },
   "time_step_min": 5,
   "charge_efficiency": 1,
-  "battery_efficiency": 1
+  "battery_efficiency": 1,
+  "charge_ref_by_capacity_a": {
+    "315": 125,
+    "420": 185,
+    "525": 200,
+    "630": 200
+  }
 }
