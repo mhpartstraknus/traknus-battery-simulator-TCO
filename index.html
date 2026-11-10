@@ -233,7 +233,9 @@
     .tco-chart-card .tco-projection-chart-wrap {overflow-x:auto}
     .tco-chart-card .tco-projection-chart {min-width:0;width:100%}
     .tco-year-chart {min-width:0!important}
-    .tco-chart-card .tco-legend {justify-content:center}
+    .tco-chart-card .tco-legend {display:grid;grid-template-columns:repeat(var(--legend-cols,2),minmax(0,1fr));justify-content:stretch;justify-items:start;align-items:start;gap:10px 12px;margin:10px 4px 8px}
+    .tco-chart-card .tco-legend-item {min-width:0;align-items:flex-start;line-height:1.35}
+    .tco-chart-card .tco-legend-item i {flex:0 0 14px;margin-top:.45em}
     .tco-stack-chart {height:315px}
     .tco-result-highlight {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:15px 0}
     .tco-result-card {border:1px solid var(--line);border-radius:14px;background:var(--panel-soft);padding:16px}
@@ -399,7 +401,7 @@
     .customer-summary h3 {margin:0 0 5px}.customer-summary p {margin:0;color:var(--muted);font-size:.9rem}.print-fact strong {overflow-wrap:anywhere}
 
     @media (max-width:760px) { .hero {flex-direction:row;align-items:center;padding:19px;min-height:184px;gap:12px}.hero-copy {max-width:62%}.hero-machine {width:38%;height:132px;padding:0}.customer-grid {grid-template-columns:1fr}.type-card {min-height:102px}.truck-photo-wrap {flex-basis:83px;width:83px;height:70px} }
-    @media (max-width:480px) { .hero {padding:15px;gap:8px;min-height:158px}.hero h1 {font-size:1.7rem}.hero p {font-size:.84rem}.hero-machine {height:106px;width:36%}.type-card {padding:9px;gap:9px}.truck-photo-wrap {flex-basis:72px;width:72px;height:64px} }
+    @media (max-width:480px) { .hero {padding:15px;gap:8px;min-height:158px}.hero h1 {font-size:1.7rem}.hero p {font-size:.84rem}.hero-machine {height:106px;width:36%}.type-card {padding:9px;gap:9px}.truck-photo-wrap {flex-basis:72px;width:72px;height:64px}.tco-chart-card .tco-legend {--legend-cols:2!important} }
     .tco-result-highlight {grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
     .tco-legend {display:flex;flex-wrap:wrap;gap:10px 16px;margin:10px 4px 14px}
     .tco-legend-item {display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:.92rem}
@@ -437,7 +439,7 @@
     function truckPhotoFor(model,type){var s=seriesOf(model||"");var map={"8FBE":"toyota-8fbe.webp","8FBN":"toyota-8fbn.webp","8FBH":"toyota-8fbh.webp","8FB":"toyota-8fb-counterbalance.webp","8FBR(S)":"toyota-8fbr.webp","8FBS(S)":"toyota-8fbs-reach.webp","8FBP":"toyota-8fbp-order-picker.webp","4CBT":"toyota-4cbt-tow-tractor.webp","3TE":"toyota-3te-tow-tractor.webp"};return map[s]?"assets/"+map[s]:(type==="CB"?TRAKNUS_CB_FORKLIFT_IMAGE:TRAKNUS_WH_FORKLIFT_IMAGE);}
     var state = {
       screen:"welcome", lang:localStorage.getItem("traknus-lang") || "en", theme:localStorage.getItem("traknus-theme") || "light",
-      customer:{company:"",location:"",salesperson:""}, customerError:"", module:null, tco:{model:"",capacity:"",leadBatteryPrice:"",leadChargerPrice:"",lithiumBatteryPrice:"",lithiumChargerPrice:"",brands:{lead:[],lithium:[]},nextBrandId:1,chartOptions:{annualBars:true,cumulativeLines:true},params:{periodYears:30,workingDays:300,workHours:16,laborPerHour:10000,units:1,forkliftPrice:0,leadSpareBatteries:1,replacementQty:"",replacementPrice:"",exchangeCount:3,exchangeMinutes:15,carrierCount:2,carrierPrice:10000000,rackPrice:0,electricityKw:25,electricityRate:1200,refillPerMonth:4,refillMinutes:20,waterPerBatteryYear:1000000,refillDevicePrice:500000,otherLeadCost:0,leadLifetimeCycles:1200,lithiumLifetimeCycles:3500,leadCyclesPerDay:2,lithiumCyclesPerDay:2}},
+      customer:{company:"",location:"",salesperson:""}, customerError:"", module:null, tco:{model:"",capacity:"",leadBatteryPrice:"",leadChargerPrice:"",lithiumBatteryPrice:"",lithiumChargerPrice:"",brands:{lead:[],lithium:[]},nextBrandId:1,chartOptions:{annualBars:true,cumulativeLines:true},params:{periodYears:30,workingDays:300,workHours:16,laborPerHour:10000,units:1,forkliftPrice:0,leadSpareBatteries:1,replacementQty:"",replacementPrice:"",exchangeCount:3,exchangeMinutes:15,carrierCount:2,carrierPrice:10000000,rackPrice:0,electricityKw:25,electricityRate:1200,refillPerMonth:4,refillMinutes:20,waterPerBatteryYear:1000000,refillDevicePrice:500000,leadLifetimeCycles:1200,lithiumLifetimeCycles:3500,leadCyclesPerDay:2,lithiumCyclesPerDay:2}},
       trucks:[newTruck("Forklift 1")],
       workdayHours:8, shiftCount:1, shiftLengths:[], scheduleConfigKey:null,
       firstStart:"08:00", shiftStarts:[], breaks:[[]], visualResultKeys:null
@@ -643,7 +645,7 @@
     function tcoMoney(n) {
       return 'Rp '+new Intl.NumberFormat("id-ID",{maximumFractionDigits:0}).format(Math.round(Number(n)||0));
     }
-    function tcoIsMoneyField(key){return ["laborPerHour","carrierPrice","electricityRate","waterPerBatteryYear","refillDevicePrice","otherLeadCost","replacementPrice","leadBatteryPrice","leadChargerPrice","lithiumBatteryPrice","lithiumChargerPrice","brandBatteryPrice","brandChargerPrice"].indexOf(key)>=0;}
+    function tcoIsMoneyField(key){return ["laborPerHour","carrierPrice","electricityRate","waterPerBatteryYear","refillDevicePrice","replacementPrice","leadBatteryPrice","leadChargerPrice","lithiumBatteryPrice","lithiumChargerPrice","brandBatteryPrice","brandChargerPrice"].indexOf(key)>=0;}
     function tcoInputMoney(value){var n=tcoParse(value);return n?new Intl.NumberFormat("id-ID",{maximumFractionDigits:0}).format(Math.round(n)):"";}
     function tcoPercent(value) {
       return new Intl.NumberFormat(state.lang==="id"?"id-ID":"en-US",{maximumFractionDigits:1}).format(Number(value)||0)+"%";
@@ -678,7 +680,7 @@
       var waterAnnual=tcoParse(p.waterPerBatteryYear)*leadQty;
       var refillLaborAnnual=tcoParse(p.refillPerMonth)*tcoParse(p.refillMinutes)*leadQty/60*12*labor;
       var leadAnnual=exchangeAnnual+electricityAnnual+waterAnnual+refillLaborAnnual;
-      var leadInitialCommon=forklift+tcoParse(p.rackPrice)+tcoParse(p.carrierCount)*tcoParse(p.carrierPrice)+tcoParse(p.refillDevicePrice)*leadQty+tcoParse(p.otherLeadCost);
+      var leadInitialCommon=forklift+tcoParse(p.rackPrice)+tcoParse(p.carrierCount)*tcoParse(p.carrierPrice)+tcoParse(p.refillDevicePrice)*leadQty;
       var liAnnual=electricityAnnual*.8,liInitialCommon=forklift;
       var brands=[],palette=["#cf3740","#2268a7","#56825e","#9b65a8","#d08c32","#438b8b","#8c5f45","#596bba","#b35b8c","#5c8e8a"];
       function addBrand(group,name,batteryPrice,chargerPrice,id){
@@ -692,7 +694,6 @@
           {key:"electricity",initial:0,running:electricityAnnual*years},
           {key:"watering",initial:tcoParse(p.refillDevicePrice)*leadQty,running:(waterAnnual+refillLaborAnnual)*years},
           {key:"replenishment",initial:0,running:replacement},
-          {key:"other",initial:tcoParse(p.otherLeadCost),running:0}
         ]:[
           {key:"forklift",initial:forklift,running:0},
           {key:"battery",initial:bp*units+cp*units,running:0},
@@ -700,7 +701,6 @@
           {key:"electricity",initial:0,running:liAnnual*years},
           {key:"watering",initial:0,running:0},
           {key:"replenishment",initial:0,running:0},
-          {key:"other",initial:0,running:0}
         ];
         brands.push({id:id,group:group,name:name,voltage:model.voltage_v,capacity:Number(state.tco.capacity),batteryPrice:bp,chargerPrice:cp,lifeYears:isLead?leadLife:liLife,replenishment:isLead?leadRepl:0,replacementQty:isLead?leadRepl:0,replacementUnitPrice:replacementUnitPrice,initial:initial,annual:annual,total:initial+annual*years+replacement,color:palette[brands.length%palette.length],breakdown:breakdown});
       }
@@ -742,8 +742,7 @@
         {key:"exchange",label:tr("Pertukaran baterai","Battery exchange"),color:"#ed7d31"},
         {key:"electricity",label:tr("Listrik","Electricity"),color:"#b7b7b7"},
         {key:"watering",label:tr("Pengisian air aki Lead Acid","Lead Acid battery watering"),color:"#ffc000"},
-        {key:"replenishment",label:tr("Baterai pengganti","Replacement battery"),color:"#92d050"},
-        {key:"other",label:tr("Lain-lain","Other"),color:"#d9e1f2"}
+        {key:"replenishment",label:tr("Baterai pengganti","Replacement battery"),color:"#92d050"}
       ];
     }
     function tcoBreakdownTable(results) {
@@ -843,10 +842,10 @@
         var grid="",bars="",labels="",slot=plotW/results.brands.length,barWidth=Math.min(70,slot*.54);
         for(var tick=0;tick<=4;tick++){var f=tick/4,y=top+plotH-plotH*f;grid+='<line x1="'+left+'" y1="'+y.toFixed(1)+'" x2="'+(left+plotW)+'" y2="'+y.toFixed(1)+'" stroke="var(--line)"/><text x="'+(left-7)+'" y="'+(y+4).toFixed(1)+'" text-anchor="end" fill="var(--muted)" font-size="10">'+esc(tcoMoney(max*f))+'</text>';}
         results.brands.forEach(function(b,index){var x=left+slot*index+(slot-barWidth)/2,cursor=top+plotH;cats.forEach(function(cat){var c=component(b,cat.key),value=c.initial+c.running;if(value<=0)return;var bh=plotH*value/max;cursor-=bh;bars+='<rect x="'+x.toFixed(1)+'" y="'+cursor.toFixed(1)+'" width="'+barWidth.toFixed(1)+'" height="'+Math.max(1,bh).toFixed(1)+'" rx="2" fill="'+cat.color+'"><title>'+esc(b.name)+' · '+esc(cat.label)+': '+esc(tcoMoney(value))+'</title></rect>';});labels+='<text x="'+(x+barWidth/2).toFixed(1)+'" y="'+(top+plotH+17)+'" text-anchor="middle" fill="var(--ink)" font-size="10">'+esc(b.name.length>13?b.name.slice(0,12)+"…":b.name)+'</text>';});
-        var legend=cats.map(function(c){return '<span class="tco-legend-item"><i style="background:'+c.color+'"></i>'+esc(c.label)+'</span>';}).join("");
-        return '<section class="tco-chart-card"><h3>'+title+'</h3><div class="tco-projection-chart-wrap"><svg class="tco-projection-chart tco-stack-chart" viewBox="0 0 '+width+' '+height+'" role="img" aria-label="'+esc(title)+'">'+grid+bars+labels+'</svg></div><div class="tco-legend">'+legend+'</div></section>';
+        var legend=cats.map(function(c){return '<span class="tco-legend-item"><i style="background:'+c.color+'"></i><span>'+esc(c.label)+'</span></span>';}).join("");
+        return '<section class="tco-chart-card"><h3>'+title+'</h3><div class="tco-projection-chart-wrap"><svg class="tco-projection-chart tco-stack-chart" viewBox="0 0 '+width+' '+height+'" role="img" aria-label="'+esc(title)+'">'+grid+bars+labels+'</svg></div><div class="tco-legend" style="--legend-cols:'+Math.max(1,Math.ceil(cats.length/2))+'">'+legend+'</div></section>';
       }
-      return '<div class="tco-chart-controls"><label class="tco-chart-toggle"><input type="checkbox" data-input="tco-chart" data-series="annualBars" '+(state.tco.chartOptions.annualBars?'checked':'')+'><span>'+tr("Biaya tahunan","Annual cost")+'</span></label><label class="tco-chart-toggle"><input type="checkbox" data-input="tco-chart" data-series="cumulativeLines" '+(state.tco.chartOptions.cumulativeLines?'checked':'')+'><span>'+tr("TCO kumulatif","Cumulative TCO")+'</span></label></div><p class="tco-chart-explainer">'+tr("Arahkan kursor ke batang atau titik untuk melihat nilai tepatnya. Total biaya adalah gabungan semua komponen.","Hover over a bar or point to see its exact value. Total cost combines all cost components.")+'</p><div class="tco-chart-grid">'+tcoYearChart()+costMixChart(tr("Total biaya","Total Cost"),["forklift","battery","exchange","electricity","watering","replenishment","other"])+costMixChart(tr("Biaya berjalan","Running Cost"),["exchange","electricity","watering","replenishment"])+costMixChart(tr("Biaya terkait baterai","Battery Related Cost"),["battery","exchange","replenishment"])+'</div>';
+      return '<div class="tco-chart-controls"><label class="tco-chart-toggle"><input type="checkbox" data-input="tco-chart" data-series="annualBars" '+(state.tco.chartOptions.annualBars?'checked':'')+'><span>'+tr("Biaya tahunan","Annual cost")+'</span></label><label class="tco-chart-toggle"><input type="checkbox" data-input="tco-chart" data-series="cumulativeLines" '+(state.tco.chartOptions.cumulativeLines?'checked':'')+'><span>'+tr("TCO kumulatif","Cumulative TCO")+'</span></label></div><p class="tco-chart-explainer">'+tr("Arahkan kursor ke batang atau titik untuk melihat nilai tepatnya. Total biaya adalah gabungan semua komponen.","Hover over a bar or point to see its exact value. Total cost combines all cost components.")+'</p><div class="tco-chart-grid">'+tcoYearChart()+costMixChart(tr("Total biaya","Total Cost"),["forklift","battery","exchange","electricity","watering","replenishment"])+costMixChart(tr("Biaya berjalan","Running Cost"),["exchange","electricity","watering","replenishment"])+costMixChart(tr("Biaya terkait baterai","Battery Related Cost"),["battery","exchange","replenishment"])+'</div>';
     }
     function tcoWorkbookInputBlock() {
       var p=state.tco.params,model=tcoSelectedModel(),t=state.tco;
@@ -890,9 +889,6 @@
           ["replacementQty",tr("Jumlah baterai pengganti","Replenishment battery quantity"),tr("unit","units"),String(replacementQty)],
           ["replacementPrice",tr("Harga baterai pengganti","Replacement battery price"),"Rp",replacementPrice]
         ]},
-        {name:tr("Lainnya","Others"),key:"other",color:"#d9e1f2",rows:[
-          ["otherLeadCost","-", "Rp"]
-        ]}
       ];
       function cell(row){
         var key=row[0],label=row[1],unit=row[2],fixed=row[3],control="";
