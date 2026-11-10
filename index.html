@@ -197,8 +197,8 @@
     .tco-input-table td,.tco-input-table th {border:1px solid var(--line);padding:4px 8px}
     .tco-input-table .tco-sheet-group {width:18%;text-align:left;vertical-align:top;white-space:normal;background:var(--sheet-group-color);color:#20313d;font-weight:750}
     .tco-input-table .tco-sheet-label {width:43%;text-align:left}
-    .tco-input-table .tco-sheet-value {width:25%;padding:2px}
-    .tco-input-table .tco-sheet-unit {width:14%;color:var(--muted);white-space:nowrap}
+    .tco-input-table .tco-sheet-value {width:25%;padding:2px;text-align:center}
+    .tco-input-table .tco-sheet-unit {width:14%;color:var(--muted);white-space:nowrap;text-align:center}
     .tco-sheet-input {width:100%;max-width:none;height:30px!important;min-height:30px!important;padding:3px 8px!important;border:0!important;border-radius:0!important;background:#fffdb8!important;color:#202b32!important;text-align:center;font:inherit}
     .tco-sheet-input[type="text"] {appearance:none}
     .tco-price-field {appearance:textfield}
@@ -210,9 +210,10 @@
     .tco-battery-input {margin:16px 0;padding:20px}
     .tco-battery-input h3 {margin:0 0 14px}
     .tco-main-table-wrap {overflow-x:visible}
-    .tco-breakdown-table {width:100%;min-width:0;table-layout:fixed;font-size:.88rem}
+    .tco-breakdown-table {width:100%;min-width:0;table-layout:fixed;font-size:.76rem}
     .tco-breakdown-table th:first-child {width:27%}
-    .tco-breakdown-table td,.tco-breakdown-table th {padding:8px 6px;overflow-wrap:anywhere}
+    .tco-breakdown-table td,.tco-breakdown-table th {padding:8px 5px;vertical-align:middle}
+    .tco-breakdown-table td {white-space:nowrap;font-variant-numeric:tabular-nums}
     .tco-extra-title {margin:14px 0 6px}
     .tco-extra-table {width:100%;table-layout:fixed;font-size:.86rem}
     .tco-extra-table td,.tco-extra-table th {padding:7px 5px;overflow-wrap:anywhere}
@@ -222,7 +223,7 @@
     .tco-cost-swatch {display:inline-block;width:10px;height:19px;background:var(--cost-color);border-radius:3px;vertical-align:middle;margin-right:9px}
     .tco-breakdown-table .tco-total-row {background:var(--blue-soft);font-weight:800}
     .tco-breakdown-table .tco-saving-row {background:var(--green-soft);font-weight:750}
-    .tco-chart-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;padding:16px}
+    .tco-chart-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;padding:16px}
     .tco-yearly-chart-card {grid-column:1/-1}
     .tco-axis-captions {display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-size:.82rem}
     .tco-line-legend {background:var(--line-color)!important;height:0!important;border-top:3px dashed var(--line-color);width:18px!important;border-radius:0!important}
@@ -242,7 +243,11 @@
     .tco-table th,.tco-table td {padding:10px 12px;border:1px solid var(--line);text-align:center;vertical-align:top}
     .tco-table td:first-child {text-align:left}
     .tco-table thead th {background:var(--panel-soft);text-align:center}
-    .tco-table td strong {font-size:1.02rem}
+    .tco-table td strong {font-size:.9rem;white-space:nowrap}
+    .tco-chart-controls {display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin:8px 0 14px}
+    .tco-chart-toggle {display:inline-flex;align-items:center;gap:7px;padding:7px 11px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);font-size:.84rem;font-weight:700;cursor:pointer}
+    .tco-chart-toggle input {accent-color:var(--blue);width:16px;height:16px;margin:0}
+    .tco-chart-explainer {margin:0 0 8px;color:var(--muted);font-size:.83rem;text-align:center}
     .tco-assumptions {margin-top:15px;padding:13px 15px;border:1px solid var(--line);border-radius:12px;background:var(--panel-soft)}
     .tco-assumptions summary {font-weight:800;cursor:pointer}
     .tco-assumptions p {color:var(--muted);margin:10px 0 0}
@@ -355,8 +360,9 @@
       :root {--bg:#fff;--panel:#fff;--panel-soft:#fff;--ink:#1d2d35;--muted:#586a73;--line:#d8e0e0}
       body {background:#fff;color:#1d2d35;font:10.5pt/1.35 Aptos,Arial,sans-serif}
       .shell {max-width:none;padding:0;margin:0}
-      #root > .topbar,#root > .hero,#root > footer,#app > :not(.print-report) {display:none!important}
+      #root > .topbar,#root > .hero,#root > footer,#app > :not(.print-report):not(#tco-live-print) {display:none!important}
       #app {display:block!important;margin:0;padding:0}
+      #tco-live-print {display:block!important}
       .print-report {display:block!important;width:100%;color:#1d2d35}
       .print-report h1 {font-size:20pt;line-height:1.1;margin:0 0 3mm}
       .print-report h2 {font-size:12pt;margin:5mm 0 2mm;border-bottom:1px solid #9caaad;padding-bottom:1.5mm}
@@ -430,7 +436,7 @@
     function truckPhotoFor(model,type){var s=seriesOf(model||"");var map={"8FBE":"toyota-8fbe.webp","8FBN":"toyota-8fbn.webp","8FBH":"toyota-8fbh.webp","8FB":"toyota-8fb-counterbalance.webp","8FBR(S)":"toyota-8fbr.webp","8FBS(S)":"toyota-8fbs-reach.webp","8FBP":"toyota-8fbp-order-picker.webp","4CBT":"toyota-4cbt-tow-tractor.webp","3TE":"toyota-3te-tow-tractor.webp"};return map[s]?"assets/"+map[s]:(type==="CB"?TRAKNUS_CB_FORKLIFT_IMAGE:TRAKNUS_WH_FORKLIFT_IMAGE);}
     var state = {
       screen:"welcome", lang:localStorage.getItem("traknus-lang") || "en", theme:localStorage.getItem("traknus-theme") || "light",
-      customer:{company:"",location:"",salesperson:""}, customerError:"", module:null, tco:{model:"",capacity:"",leadBatteryPrice:"",leadChargerPrice:"",lithiumBatteryPrice:"",lithiumChargerPrice:"",brands:{lead:[],lithium:[]},nextBrandId:1,params:{periodYears:30,workingDays:300,workHours:16,laborPerHour:10000,units:1,forkliftPrice:0,leadSpareBatteries:1,exchangeCount:3,exchangeMinutes:15,carrierCount:2,carrierPrice:10000000,rackPrice:0,electricityKw:25,electricityRate:1200,refillPerMonth:4,refillMinutes:20,waterPerBatteryYear:1000000,refillDevicePrice:500000,otherLeadCost:0,leadLifetimeCycles:1200,lithiumLifetimeCycles:3500,leadCyclesPerDay:2,lithiumCyclesPerDay:2}},
+      customer:{company:"",location:"",salesperson:""}, customerError:"", module:null, tco:{model:"",capacity:"",leadBatteryPrice:"",leadChargerPrice:"",lithiumBatteryPrice:"",lithiumChargerPrice:"",brands:{lead:[],lithium:[]},nextBrandId:1,chartOptions:{annualBars:true,cumulativeLines:true},params:{periodYears:30,workingDays:300,workHours:16,laborPerHour:10000,units:1,forkliftPrice:0,leadSpareBatteries:1,exchangeCount:3,exchangeMinutes:15,carrierCount:2,carrierPrice:10000000,rackPrice:0,electricityKw:25,electricityRate:1200,refillPerMonth:4,refillMinutes:20,waterPerBatteryYear:1000000,refillDevicePrice:500000,otherLeadCost:0,leadLifetimeCycles:1200,lithiumLifetimeCycles:3500,leadCyclesPerDay:2,lithiumCyclesPerDay:2}},
       trucks:[newTruck("Forklift 1")],
       workdayHours:8, shiftCount:1, shiftLengths:[], scheduleConfigKey:null,
       firstStart:"08:00", shiftStarts:[], breaks:[[]], visualResultKeys:null
@@ -778,6 +784,7 @@
       }
       function tcoYearChart(){
         var years=Math.max(1,Math.min(60,Math.ceil(results.years))),width=1180,height=390,left=92,right=92,top=42,bottom=58,plotW=width-left-right,plotH=height-top-bottom;
+        var showBars=state.tco.chartOptions.annualBars,showLines=state.tco.chartOptions.cumulativeLines;
         var annualMax=1,cumulativeMax=1,annualRows=[];
         for(var year=1;year<=years;year++){
           var row=results.brands.map(function(b){
@@ -794,17 +801,19 @@
         var grid="",axis="";
         for(var tick=0;tick<=4;tick++){
           var fraction=tick/4,y=top+plotH-plotH*fraction;
-          grid+='<line x1="'+left+'" y1="'+y.toFixed(1)+'" x2="'+(left+plotW)+'" y2="'+y.toFixed(1)+'" stroke="var(--line)"/><text x="'+(left-8)+'" y="'+(y+4).toFixed(1)+'" text-anchor="end" fill="var(--muted)" font-size="10">'+esc(tcoMoney(annualMax*fraction))+'</text><text x="'+(left+plotW+8)+'" y="'+(y+4).toFixed(1)+'" text-anchor="start" fill="var(--muted)" font-size="10">'+esc(tcoMoney(cumulativeMax*fraction))+'</text>';
+          grid+='<line x1="'+left+'" y1="'+y.toFixed(1)+'" x2="'+(left+plotW)+'" y2="'+y.toFixed(1)+'" stroke="var(--line)"/>'+(showBars?'<text x="'+(left-8)+'" y="'+(y+4).toFixed(1)+'" text-anchor="end" fill="var(--muted)" font-size="10">'+esc(tcoMoney(annualMax*fraction))+'</text>':'')+(showLines?'<text x="'+(left+plotW+8)+'" y="'+(y+4).toFixed(1)+'" text-anchor="start" fill="var(--muted)" font-size="10">'+esc(tcoMoney(cumulativeMax*fraction))+'</text>':'');
         }
         var slot=plotW/years,groupWidth=Math.min(slot*.78,40),barWidth=Math.max(2,Math.min(12,groupWidth/results.brands.length)),bars="",xLabels="";
         annualRows.forEach(function(row,yearIndex){
           var year=yearIndex+1,groupX=left+slot*yearIndex+(slot-groupWidth)/2;
           row.forEach(function(data,brandIndex){
             var x=groupX+brandIndex*barWidth,cursor=top+plotH;
-            data.values.forEach(function(item){
+            if(showBars)data.values.forEach(function(item){
               var bh=plotH*item.value/annualMax;cursor-=bh;
               bars+='<rect x="'+x.toFixed(1)+'" y="'+cursor.toFixed(1)+'" width="'+Math.max(1,barWidth-1).toFixed(1)+'" height="'+Math.max(1,bh).toFixed(1)+'" fill="'+item.category.color+'"><title>'+esc(data.brand.name)+' · '+tr("Tahun ","Year ")+year+' · '+esc(item.category.label)+': '+esc(tcoMoney(item.value))+'</title></rect>';
             });
+            if(showBars&&data.total>0){var hitY=top+plotH-plotH*data.total/annualMax;bars+='<rect x="'+(groupX+brandIndex*barWidth).toFixed(1)+'" y="'+top+'" width="'+Math.max(1,barWidth-1).toFixed(1)+'" height="'+plotH+'" fill="transparent" pointer-events="all"><title>'+esc(data.brand.name)+' · '+tr("Biaya tahun ","Year ")+year+': '+esc(tcoMoney(data.total))+'</title></rect><circle cx="'+(groupX+brandIndex*barWidth+barWidth/2).toFixed(1)+'" cy="'+hitY.toFixed(1)+'" r="3.8" fill="'+data.brand.color+'" pointer-events="none"/>';
+            }
           });
           var labelEvery=years<=20?1:years<=40?2:5;
           if(year%labelEvery===0||year===1||year===years)xLabels+='<text x="'+(left+slot*(yearIndex+.5)).toFixed(1)+'" y="'+(top+plotH+20)+'" text-anchor="middle" fill="var(--muted)" font-size="10">'+year+'</text>';
@@ -812,12 +821,13 @@
         var lines="",lineLegend="";
         results.brands.forEach(function(b,index){
           var points=annualRows.map(function(row,i){return [left+slot*(i+.5),top+plotH-(row[index].cumulative/cumulativeMax)*plotH];});
-          lines+='<polyline points="'+points.map(function(pt){return pt[0].toFixed(1)+","+pt[1].toFixed(1);}).join(" ")+'" fill="none" stroke="'+b.color+'" stroke-width="2.5" stroke-dasharray="7 5"/>'+points.map(function(pt,i){var year=i+1,val=annualRows[i][index].cumulative;return '<circle cx="'+pt[0].toFixed(1)+'" cy="'+pt[1].toFixed(1)+'" r="3.2" fill="'+b.color+'"><title>'+esc(b.name)+' · '+tr("TCO kumulatif tahun ","Cumulative TCO in year ")+year+': '+esc(tcoMoney(val))+'</title></circle>';}).join("");
-          lineLegend+='<span class="tco-legend-item"><i class="tco-line-legend" style="--line-color:'+b.color+'"></i>'+esc(b.name)+' · '+tr("TCO kumulatif","Cumulative TCO")+'</span>';
+          if(showLines)lines+='<polyline points="'+points.map(function(pt){return pt[0].toFixed(1)+","+pt[1].toFixed(1);}).join(" ")+'" fill="none" stroke="'+b.color+'" stroke-width="2.5" stroke-dasharray="7 5"/>'+points.map(function(pt,i){var year=i+1,val=annualRows[i][index].cumulative;return '<circle cx="'+pt[0].toFixed(1)+'" cy="'+pt[1].toFixed(1)+'" r="7" fill="'+b.color+'" stroke="var(--panel)" stroke-width="2" tabindex="0"><title>'+esc(b.name)+' · '+tr("TCO kumulatif tahun ","Cumulative TCO in year ")+year+': '+esc(tcoMoney(val))+'</title></circle>';}).join("");
+          if(showLines)lineLegend+='<span class="tco-legend-item"><i class="tco-line-legend" style="--line-color:'+b.color+'"></i>'+esc(b.name)+' · '+tr("TCO kumulatif","Cumulative TCO")+'</span>';
         });
-        var barLegend=categories.map(function(c){return '<span class="tco-legend-item"><i style="background:'+c.color+'"></i>'+esc(c.label)+'</span>';}).join("");
+        var barLegend=showBars?categories.map(function(c){return '<span class="tco-legend-item"><i style="background:'+c.color+'"></i>'+esc(c.label)+'</span>';}).join(""):"";
         var svg='<svg class="tco-projection-chart tco-year-chart" viewBox="0 0 '+width+' '+height+'" role="img" aria-label="'+esc(tr("Biaya tahunan dan TCO kumulatif per tahun","Annual cost and cumulative TCO by year"))+'">'+grid+bars+lines+xLabels+'</svg>';
-        return '<section class="tco-chart-card tco-yearly-chart-card"><h3>'+tr("Biaya tahunan dan TCO kumulatif per tahun","Annual cost and cumulative TCO by year")+'</h3><div class="tco-axis-captions"><span>'+tr("Batang: biaya tahunan","Bars: annual cost")+'</span><span>'+tr("Garis putus-putus: TCO kumulatif","Dashed line: cumulative TCO")+'</span></div><div class="tco-projection-chart-wrap">'+svg+'</div><div class="tco-legend">'+barLegend+lineLegend+'</div></section>';
+        var lineExplain=showLines?tr("Garis putus-putus = akumulasi biaya sampai tahun tersebut.","Dashed line = cost accumulated through that year."):"";
+        return '<section class="tco-chart-card tco-yearly-chart-card"><h3>'+tr("Biaya tahunan dan TCO kumulatif per tahun","Annual cost and cumulative TCO by year")+'</h3><div class="tco-axis-captions"><span>'+(showBars?tr("Batang = biaya pada tahun tersebut.","Bars = cost in that year."):"")+'</span><span>'+lineExplain+'</span></div><div class="tco-projection-chart-wrap">'+svg+'</div><div class="tco-legend">'+barLegend+lineLegend+'</div></section>';
       }
       function costMixChart(title,keys){
         var cats=categories.filter(function(c){return keys.indexOf(c.key)>=0;}),width=Math.max(420,Math.min(700,results.brands.length*130+170)),height=300,left=86,right=12,top=28,bottom=50,plotW=width-left-right,plotH=height-top-bottom,max=1;
@@ -828,7 +838,7 @@
         var legend=cats.map(function(c){return '<span class="tco-legend-item"><i style="background:'+c.color+'"></i>'+esc(c.label)+'</span>';}).join("");
         return '<section class="tco-chart-card"><h3>'+title+'</h3><div class="tco-projection-chart-wrap"><svg class="tco-projection-chart tco-stack-chart" viewBox="0 0 '+width+' '+height+'" role="img" aria-label="'+esc(title)+'">'+grid+bars+labels+'</svg></div><div class="tco-legend">'+legend+'</div></section>';
       }
-      return '<div class="tco-chart-grid">'+tcoYearChart()+costMixChart(tr("Biaya berjalan","Running Cost"),["exchange","electricity","watering","replenishment"])+costMixChart(tr("Biaya terkait baterai","Battery Related Cost"),["battery","exchange","replenishment"])+'</div>';
+      return '<div class="tco-chart-controls"><label class="tco-chart-toggle"><input type="checkbox" data-input="tco-chart" data-series="annualBars" '+(state.tco.chartOptions.annualBars?'checked':'')+'><span>'+tr("Batang biaya tahunan","Annual cost bars")+'</span></label><label class="tco-chart-toggle"><input type="checkbox" data-input="tco-chart" data-series="cumulativeLines" '+(state.tco.chartOptions.cumulativeLines?'checked':'')+'><span>'+tr("Garis putus-putus TCO kumulatif","Cumulative TCO dashed lines")+'</span></label></div><p class="tco-chart-explainer">'+tr("Arahkan kursor ke batang atau titik untuk melihat nilai tepatnya. Total biaya adalah gabungan semua komponen.","Hover over a bar or point to see its exact value. Total cost combines all cost components.")+'</p><div class="tco-chart-grid">'+tcoYearChart()+costMixChart(tr("Total biaya","Total Cost"),["forklift","battery","exchange","electricity","watering","replenishment","other"])+costMixChart(tr("Biaya berjalan","Running Cost"),["exchange","electricity","watering","replenishment"])+costMixChart(tr("Biaya terkait baterai","Battery Related Cost"),["battery","exchange","replenishment"])+'</div>';
     }
     function tcoWorkbookInputBlock() {
       var p=state.tco.params,model=tcoSelectedModel(),t=state.tco;
@@ -884,16 +894,24 @@
       var body=groups.map(function(group){return group.rows.map(function(row,index){return '<tr class="tco-sheet-row" style="--sheet-group-color:'+group.color+'">'+(index===0?'<th class="tco-sheet-group" rowspan="'+group.rows.length+'">'+esc(group.name)+'</th>':"")+cell(row)+'</tr>';}).join("");}).join("");
       return '<details class="tco-assumptions" open><summary>'+tr("Parameter perhitungan","Calculation parameters")+'</summary><div class="report-table-wrap tco-sheet-wrap"><table class="tco-input-table"><colgroup><col style="width:18%"><col style="width:43%"><col style="width:25%"><col style="width:14%"></colgroup><tbody>'+body+'</tbody></table></div></details>';
     }
-    function tcoScreen() {
-      var html='<section class="panel"><div class="panel-head"><div><div class="eyebrow-small">'+tr("Kalkulator biaya baterai","Battery cost calculator")+'</div><h2>'+tr("Total Biaya Kepemilikan (TCO)","Total Cost of Ownership (TCO)")+'</h2><p class="sub">'+tr("Masukkan harga baterai dan charger untuk setiap merek. Contoh angka ditampilkan di dalam kolom.","Enter battery and charger prices for each brand. Example amounts are shown in the fields.")+'</p></div></div>'+customerSummary()+tcoBatteryInputBlock("lead",tr("Lead Acid","Lead Acid"),"lead")+tcoBatteryInputBlock("lithium",tr("Baterai lithium Traknus","Traknus Lithium"),"lithium")+tcoWorkbookInputBlock()+tcoMissingPriceNote();
-      var results=tcoResults();
+    function tcoOutputHtml(results) {
       if(results){
-        html+='<h3 class="tco-comparison-title">'+tr("Perhitungan biaya awal dan berjalan selama ","Calculation showing initial and running cost over ")+fmtNum(results.years)+" "+tr("tahun","years")+'</h3>'+tcoBreakdownTable(results)+'<details class="tco-projection-toggle" open><summary>'+tr("Lihat grafik biaya dan total","View cost charts and totals")+'</summary>'+tcoProjectionSection(results)+'</details>';
-      }else{
-        html+='<p class="tco-error" role="status">'+tr("Masukkan contoh angka atau harga aktual pada kolom harga baterai dan charger. Hasil dan grafik akan diperbarui otomatis.","Enter example amounts or actual prices in the battery and charger price fields. Results and the chart will update automatically.")+'</p>';
+        return '<h3 class="tco-comparison-title">'+tr("Perhitungan biaya awal dan berjalan selama ","Calculation showing initial and running cost over ")+fmtNum(results.years)+" "+tr("tahun","years")+'</h3>'+tcoBreakdownTable(results)+'<details class="tco-projection-toggle" open><summary>'+tr("Lihat grafik biaya dan total","View cost charts and totals")+'</summary>'+tcoProjectionSection(results)+'</details>';
       }
-      html+='<div class="button-row">'+menuBackButtonHtml()+'<div class="button-group"><button class="secondary" data-act="tco-share" '+(!results?'disabled':'')+'><svg class="share-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.7 10.7l6.6-4.4M8.7 13.3l6.6 4.4"></path></svg>'+tr("Bagikan","Share")+'</button><button class="primary" data-act="tco-print" '+(!results?'disabled':'')+'>⌑ '+tr("Cetak / simpan PDF","Print / save PDF")+'</button><button class="secondary" data-act="start-over">'+tr("Mulai dari awal","Start over")+'</button></div></div></section>';
-      return html+(results?tcoPrintReport(results):"");
+      return '<p class="tco-error" role="status">'+tr("Isi harga baterai dan charger agar perbandingan merek serta grafiknya muncul. Hasil diperbarui otomatis.","Enter the battery and charger prices to show brand comparisons and charts. Results update automatically.")+'</p>';
+    }
+    function tcoRefreshLiveOutput(){
+      var results=tcoResults(),live=document.getElementById("tco-live-output"),print=document.getElementById("tco-live-print");
+      if(live)live.innerHTML=tcoMissingPriceNote()+tcoOutputHtml(results);
+      if(print)print.innerHTML=results?tcoPrintReport(results):"";
+      var share=app.querySelector('[data-act="tco-share"]'),printButton=app.querySelector('[data-act="tco-print"]');
+      if(share)share.disabled=!results;if(printButton)printButton.disabled=!results;
+    }
+    function tcoScreen() {
+      var results=tcoResults();
+      var html='<section class="panel"><div class="panel-head"><div><div class="eyebrow-small">'+tr("Kalkulator biaya baterai","Battery cost calculator")+'</div><h2>'+tr("Total Biaya Kepemilikan (TCO)","Total Cost of Ownership (TCO)")+'</h2><p class="sub">'+tr("Isi harga baterai dan charger untuk tiap merek. Setelah keduanya terisi, merek itu masuk ke tabel dan grafik.","Enter the battery and charger price for each brand. A brand appears in the table and charts after both prices are entered.")+'</p></div></div>'+customerSummary()+tcoBatteryInputBlock("lead",tr("Lead Acid","Lead Acid"),"lead")+tcoBatteryInputBlock("lithium",tr("Baterai lithium Traknus","Traknus Lithium"),"lithium")+tcoWorkbookInputBlock()+'<div id="tco-live-output">'+tcoMissingPriceNote()+tcoOutputHtml(results)+'</div>';
+      html+='<div class="button-row">'+menuBackButtonHtml()+'<div class="button-group"><button class="secondary" data-act="tco-share" '+(!results?'disabled':'')+'><svg class="share-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.7 10.7l6.6-4.4M8.7 13.3l6.6 4.4"></path></svg>'+tr("Bagikan","Share")+'</button><button class="primary" data-act="tco-print" '+(!results?'disabled':'')+'>⌑ '+tr("Cetak / simpan PDF","Print / save PDF")+'</button><button class="secondary" data-act="start-over">'+tr("Mulai dari awal","Start over")+'</button></div></div></section><div id="tco-live-print">'+(results?tcoPrintReport(results):"")+'</div>';
+      return html;
     }
     function tcoPrintReport(results) {
       var date=new Intl.DateTimeFormat(state.lang==="id"?"id-ID":"en-GB",{day:"numeric",month:"long",year:"numeric"}).format(new Date());
@@ -1329,18 +1347,18 @@
       else if(key==="capacity")state.tco.capacity=el.value;
       else if(["leadBatteryPrice","leadChargerPrice","lithiumBatteryPrice","lithiumChargerPrice"].indexOf(key)>=0)state.tco[key]=el.value;
       else state.tco.params[key]=el.value;
-      if(state.screen==="tco"&&el.tagName!=="SELECT"){
-        var selector='[data-input="tco-new"][data-key="'+key+'"]';
-        if(el.dataset.group)selector+='[data-group="'+el.dataset.group+'"]';
-        if(el.dataset.brandId)selector+='[data-brand-id="'+el.dataset.brandId+'"]';
-        render();
-        var replacement=app.querySelector(selector);
-        if(replacement){replacement.focus();if(moneyInput)replacement.value=rawMoney;if(replacement.type==="text"&&replacement.setSelectionRange)replacement.setSelectionRange(replacement.value.length,replacement.value.length);}
-      }
+      if(state.screen==="tco"){tcoRefreshLiveOutput();return;}
     });
+    app.addEventListener("focusin",function(e){var el=e.target;if(el.dataset.input==="tco-new"&&tcoIsMoneyField(el.dataset.key))el.value=String(el.value).replace(/\D/g,"");});
     app.addEventListener("focusout",function(e){var el=e.target;if(el.dataset.input!=="tco-new"||!tcoIsMoneyField(el.dataset.key))return;el.value=tcoInputMoney(el.value);});
     app.addEventListener("change",function(e){
       var el=e.target,input=el.dataset.input;if(!input)return;
+      if(input==="tco-chart"){
+        var otherSeries=el.dataset.series==="annualBars"?"cumulativeLines":"annualBars";
+        if(!el.checked&&!state.tco.chartOptions[otherSeries]){el.checked=true;return;}
+        state.tco.chartOptions[el.dataset.series]=el.checked;tcoRefreshLiveOutput();return;
+      }
+      if(input==="tco-new"){tcoRefreshLiveOutput();return;}
       var slot=el.dataset.slot,t=slot?state.trucks[Number(slot.slice(1))-1]:null;
       if(input==="viz-result"){var key=String(el.dataset.index)+"|"+String(el.dataset.ah);if(!el.checked&&state.visualResultKeys.length<=1)state.visualResultKeys=[key];else state.visualResultKeys=el.checked?(state.visualResultKeys.indexOf(key)>=0?state.visualResultKeys:state.visualResultKeys.concat([key])):state.visualResultKeys.filter(function(item){return item!==key;});}
       else if(input==="truck-type"&&t){t.type=el.value||null;t.series=null;t.model=null;t.batteries=[];t.charger=null;t.mode="Standard";}
