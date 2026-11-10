@@ -437,7 +437,7 @@
     function truckPhotoFor(model,type){var s=seriesOf(model||"");var map={"8FBE":"toyota-8fbe.webp","8FBN":"toyota-8fbn.webp","8FBH":"toyota-8fbh.webp","8FB":"toyota-8fb-counterbalance.webp","8FBR(S)":"toyota-8fbr.webp","8FBS(S)":"toyota-8fbs-reach.webp","8FBP":"toyota-8fbp-order-picker.webp","4CBT":"toyota-4cbt-tow-tractor.webp","3TE":"toyota-3te-tow-tractor.webp"};return map[s]?"assets/"+map[s]:(type==="CB"?TRAKNUS_CB_FORKLIFT_IMAGE:TRAKNUS_WH_FORKLIFT_IMAGE);}
     var state = {
       screen:"welcome", lang:localStorage.getItem("traknus-lang") || "en", theme:localStorage.getItem("traknus-theme") || "light",
-      customer:{company:"",location:"",salesperson:""}, customerError:"", module:null, tco:{model:"",capacity:"",leadBatteryPrice:"",leadChargerPrice:"",lithiumBatteryPrice:"",lithiumChargerPrice:"",brands:{lead:[],lithium:[]},nextBrandId:1,chartOptions:{annualBars:true,cumulativeLines:true},params:{periodYears:30,workingDays:300,workHours:16,laborPerHour:10000,units:1,forkliftPrice:0,leadSpareBatteries:1,exchangeCount:3,exchangeMinutes:15,carrierCount:2,carrierPrice:10000000,rackPrice:0,electricityKw:25,electricityRate:1200,refillPerMonth:4,refillMinutes:20,waterPerBatteryYear:1000000,refillDevicePrice:500000,otherLeadCost:0,leadLifetimeCycles:1200,lithiumLifetimeCycles:3500,leadCyclesPerDay:2,lithiumCyclesPerDay:2}},
+      customer:{company:"",location:"",salesperson:""}, customerError:"", module:null, tco:{model:"",capacity:"",leadBatteryPrice:"",leadChargerPrice:"",lithiumBatteryPrice:"",lithiumChargerPrice:"",brands:{lead:[],lithium:[]},nextBrandId:1,chartOptions:{annualBars:true,cumulativeLines:true},params:{periodYears:30,workingDays:300,workHours:16,laborPerHour:10000,units:1,forkliftPrice:0,leadSpareBatteries:1,replacementQty:"",replacementPrice:"",exchangeCount:3,exchangeMinutes:15,carrierCount:2,carrierPrice:10000000,rackPrice:0,electricityKw:25,electricityRate:1200,refillPerMonth:4,refillMinutes:20,waterPerBatteryYear:1000000,refillDevicePrice:500000,otherLeadCost:0,leadLifetimeCycles:1200,lithiumLifetimeCycles:3500,leadCyclesPerDay:2,lithiumCyclesPerDay:2}},
       trucks:[newTruck("Forklift 1")],
       workdayHours:8, shiftCount:1, shiftLengths:[], scheduleConfigKey:null,
       firstStart:"08:00", shiftStarts:[], breaks:[[]], visualResultKeys:null
@@ -643,7 +643,7 @@
     function tcoMoney(n) {
       return 'Rp '+new Intl.NumberFormat("id-ID",{maximumFractionDigits:0}).format(Math.round(Number(n)||0));
     }
-    function tcoIsMoneyField(key){return ["laborPerHour","carrierPrice","electricityRate","waterPerBatteryYear","refillDevicePrice","otherLeadCost","leadBatteryPrice","leadChargerPrice","lithiumBatteryPrice","lithiumChargerPrice","brandBatteryPrice","brandChargerPrice"].indexOf(key)>=0;}
+    function tcoIsMoneyField(key){return ["laborPerHour","carrierPrice","electricityRate","waterPerBatteryYear","refillDevicePrice","otherLeadCost","replacementPrice","leadBatteryPrice","leadChargerPrice","lithiumBatteryPrice","lithiumChargerPrice","brandBatteryPrice","brandChargerPrice"].indexOf(key)>=0;}
     function tcoInputMoney(value){var n=tcoParse(value);return n?new Intl.NumberFormat("id-ID",{maximumFractionDigits:0}).format(Math.round(n)):"";}
     function tcoPercent(value) {
       return new Intl.NumberFormat(state.lang==="id"?"id-ID":"en-US",{maximumFractionDigits:1}).format(Number(value)||0)+"%";
@@ -671,7 +671,7 @@
       if(years<=0||days<=0||hours<=0||units<=0)return null;
       var leadCycles=tcoParse(p.leadCyclesPerDay),liCycles=tcoParse(p.lithiumCyclesPerDay);
       var leadLife=tcoParse(p.leadLifetimeCycles)/leadCycles/days,liLife=tcoParse(p.lithiumLifetimeCycles)/liCycles/days;
-      var leadQty=units+spares,leadRepl=Math.max(0,Math.ceil(years/leadLife)*leadQty-leadQty);
+      var leadQty=units+spares,calculatedLeadRepl=Math.max(0,Math.ceil(years/leadLife)*leadQty-leadQty),leadRepl=p.replacementQty===""||p.replacementQty==null?calculatedLeadRepl:Math.max(0,tcoParse(p.replacementQty));
       var forklift=tcoParse(p.forkliftPrice)*units;
       var exchangeAnnual=tcoParse(p.exchangeCount)*tcoParse(p.exchangeMinutes)*units/60*days*labor;
       var electricityAnnual=days*hours*tcoParse(p.electricityRate)*tcoParse(p.electricityKw)*units;
@@ -684,7 +684,7 @@
       function addBrand(group,name,batteryPrice,chargerPrice,id){
         var bp=tcoParse(batteryPrice),cp=tcoParse(chargerPrice);if(bp<=0||cp<=0)return;
         var isLead=group==="lead",initial=isLead?leadInitialCommon+bp*leadQty+cp*units:liInitialCommon+bp*units+cp*units;
-        var replacement=isLead?leadRepl*bp:0,annual=isLead?leadAnnual:liAnnual;
+        var replacementUnitPrice=p.replacementPrice===""||p.replacementPrice==null?bp:tcoParse(p.replacementPrice),replacement=isLead?leadRepl*replacementUnitPrice:0,annual=isLead?leadAnnual:liAnnual;
         var breakdown=isLead?[
           {key:"forklift",initial:forklift,running:0},
           {key:"battery",initial:bp*leadQty+cp*units,running:0},
@@ -702,7 +702,7 @@
           {key:"replenishment",initial:0,running:0},
           {key:"other",initial:0,running:0}
         ];
-        brands.push({id:id,group:group,name:name,voltage:model.voltage_v,capacity:Number(state.tco.capacity),batteryPrice:bp,chargerPrice:cp,lifeYears:isLead?leadLife:liLife,replenishment:isLead?leadRepl:0,replacementQty:isLead?leadQty:0,initial:initial,annual:annual,total:initial+annual*years+replacement,color:palette[brands.length%palette.length],breakdown:breakdown});
+        brands.push({id:id,group:group,name:name,voltage:model.voltage_v,capacity:Number(state.tco.capacity),batteryPrice:bp,chargerPrice:cp,lifeYears:isLead?leadLife:liLife,replenishment:isLead?leadRepl:0,replacementQty:isLead?leadRepl:0,replacementUnitPrice:replacementUnitPrice,initial:initial,annual:annual,total:initial+annual*years+replacement,color:palette[brands.length%palette.length],breakdown:breakdown});
       }
       addBrand("lead",tr("Lead Acid","Lead Acid"),state.tco.leadBatteryPrice,state.tco.leadChargerPrice,"lead-base");
       (state.tco.brands.lead||[]).forEach(function(b){addBrand("lead",b.customName?b.name:tr("Merek "+(b.defaultIndex||1),"Brand "+(b.defaultIndex||1)),b.batteryPrice,b.chargerPrice,b.id);});
@@ -772,16 +772,21 @@
     function tcoProjectionSection(results) {
       var categories=tcoTableRows(results);
       function component(brand,key){return brand.breakdown.find(function(x){return x.key===key;})||{initial:0,running:0};}
+      function replacementCountThrough(brand,year){
+        if(brand.group!=="lead"||!brand.replenishment||!brand.lifeYears)return 0;
+        var eventCount=Math.max(0,Math.ceil(results.years/brand.lifeYears)-1);
+        if(!eventCount)return 0;
+        var elapsed=Math.max(0,Math.min(year,results.years-0.000001));
+        var events=Math.min(eventCount,Math.floor(elapsed/brand.lifeYears));
+        return Math.floor(events*brand.replenishment/eventCount);
+      }
       function replacementEvents(brand,year){
-        if(brand.group!=="lead"||!brand.replacementQty||!brand.lifeYears)return 0;
-        var before=Math.floor(Math.max(0,Math.min(year-1,results.years-0.000001))/brand.lifeYears);
-        var through=Math.floor(Math.max(0,Math.min(year,results.years-0.000001))/brand.lifeYears);
-        return Math.max(0,through-before)*brand.replacementQty;
+        return Math.max(0,replacementCountThrough(brand,year)-replacementCountThrough(brand,year-1));
       }
       function cumulative(brand,year){
         if(year<=0)return 0;
-        var elapsed=Math.min(year,results.years),events=Math.floor(Math.max(0,Math.min(year,results.years-0.000001))/Math.max(.000001,brand.lifeYears));
-        return brand.initial+brand.annual*elapsed+events*brand.replacementQty*brand.batteryPrice;
+        var elapsed=Math.min(year,results.years);
+        return brand.initial+brand.annual*elapsed+replacementCountThrough(brand,year)*brand.replacementUnitPrice;
       }
       function tcoYearChart(){
         var years=Math.max(1,Math.min(60,Math.ceil(results.years))),width=1180,height=390,left=92,right=92,top=42,bottom=58,plotW=width-left-right,plotH=height-top-bottom;
@@ -789,8 +794,8 @@
         var annualMax=1,cumulativeMax=1,annualRows=[];
         for(var year=1;year<=years;year++){
           var row=results.brands.map(function(b){
-            var values=categories.map(function(cat){
-              var c=component(b,cat.key),regular=cat.key==="replenishment"?0:c.running/Math.max(1,results.years),initial=year===1?c.initial:0,replace=cat.key==="replenishment"?replacementEvents(b,year)*b.batteryPrice:0;
+              var values=categories.map(function(cat){
+              var c=component(b,cat.key),regular=cat.key==="replenishment"?0:c.running/Math.max(1,results.years),initial=year===1?c.initial:0,replace=cat.key==="replenishment"?replacementEvents(b,year)*b.replacementUnitPrice:0;
               return {category:cat,value:initial+regular+replace};
             }).filter(function(x){return x.value>0;});
             var total=values.reduce(function(sum,x){return sum+x.value;},0);
@@ -802,7 +807,8 @@
         var grid="",axis="";
         for(var tick=0;tick<=4;tick++){
           var fraction=tick/4,y=top+plotH-plotH*fraction;
-          grid+='<line x1="'+left+'" y1="'+y.toFixed(1)+'" x2="'+(left+plotW)+'" y2="'+y.toFixed(1)+'" stroke="var(--line)"/>'+(showBars?'<text x="'+(left-8)+'" y="'+(y+4).toFixed(1)+'" text-anchor="end" fill="var(--muted)" font-size="10">'+esc(tcoMoney(annualMax*fraction))+'</text>':'')+(showLines?'<text x="'+(left+plotW+8)+'" y="'+(y+4).toFixed(1)+'" text-anchor="start" fill="var(--muted)" font-size="10">'+esc(tcoMoney(cumulativeMax*fraction))+'</text>':'');
+          var leftScale=showBars?annualMax:cumulativeMax,rightScale=showBars&&showLines?cumulativeMax:null;
+          grid+='<line x1="'+left+'" y1="'+y.toFixed(1)+'" x2="'+(left+plotW)+'" y2="'+y.toFixed(1)+'" stroke="var(--line)"/>'+(showBars||showLines?'<text x="'+(left-8)+'" y="'+(y+4).toFixed(1)+'" text-anchor="end" fill="var(--muted)" font-size="10">'+esc(tcoMoney(leftScale*fraction))+'</text>':'')+(rightScale!==null?'<text x="'+(left+plotW+8)+'" y="'+(y+4).toFixed(1)+'" text-anchor="start" fill="var(--muted)" font-size="10">'+esc(tcoMoney(rightScale*fraction))+'</text>':'');
         }
         var slot=plotW/years,groupWidth=Math.min(slot*.78,40),barWidth=Math.max(2,Math.min(12,groupWidth/results.brands.length)),bars="",xLabels="";
         annualRows.forEach(function(row,yearIndex){
@@ -846,7 +852,10 @@
       var p=state.tco.params,model=tcoSelectedModel(),t=state.tco;
       var leadQty=tcoParse(p.units)+tcoParse(p.leadSpareBatteries);
       var leadLife=tcoParse(p.leadLifetimeCycles)/Math.max(1,tcoParse(p.leadCyclesPerDay))/Math.max(1,tcoParse(p.workingDays));
-      var replacementQty=leadLife>0?Math.max(0,Math.ceil(tcoParse(p.periodYears)/leadLife)*leadQty-leadQty):0;
+      var calculatedReplacementQty=leadLife>0?Math.max(0,Math.ceil(tcoParse(p.periodYears)/leadLife)*leadQty-leadQty):0;
+      var replacementQty=p.replacementQty===""||p.replacementQty==null?calculatedReplacementQty:Math.max(0,tcoParse(p.replacementQty));
+      var replacementPrice=p.replacementPrice===""||p.replacementPrice==null?(t.leadBatteryPrice?tcoInputMoney(t.leadBatteryPrice):""):tcoInputMoney(p.replacementPrice);
+      var modelOptions=CATALOG.models.map(function(m){return '<option value="'+esc(m.model)+'" '+(m.model===t.model?'selected':'')+'>'+esc(m.model)+'</option>';}).join("");
       var batteryOptions=model?(model.battery_options||[]).map(function(o){return '<option value="'+o.ah+'" '+(Number(t.capacity)===Number(o.ah)?'selected':'')+'>'+o.ah+' Ah</option>';}).join(""):"";
       var groups=[
         {name:tr("Info Operasi","Operation Info"),key:"operation",color:"#e8edf2",rows:[
@@ -879,7 +888,7 @@
         ]},
         {name:tr("Baterai Pengganti","Replenishment Battery"),key:"replenishment",color:"#92d050",rows:[
           ["replacementQty",tr("Jumlah baterai pengganti","Replenishment battery quantity"),tr("unit","units"),String(replacementQty)],
-          ["replacementPrice",tr("Harga baterai pengganti (mengikuti harga Lead Acid)","Replacement battery price (uses Lead Acid price)"),"Rp",t.leadBatteryPrice?tcoInputMoney(t.leadBatteryPrice):"—"]
+          ["replacementPrice",tr("Harga baterai pengganti","Replacement battery price"),"Rp",replacementPrice]
         ]},
         {name:tr("Lainnya","Others"),key:"other",color:"#d9e1f2",rows:[
           ["otherLeadCost","-", "Rp"]
@@ -887,9 +896,10 @@
       ];
       function cell(row){
         var key=row[0],label=row[1],unit=row[2],fixed=row[3],control="";
-        if(key==="model")control='<input class="input tco-sheet-input" value="'+esc(fixed)+'" readonly aria-label="'+esc(label)+'">';
+        if(key==="model")control='<select class="input tco-sheet-input" data-input="tco-new" data-key="model" aria-label="'+esc(label)+'"><option value="">'+tr("Pilih model","Select model")+'</option>'+modelOptions+'</select>';
         else if(key==="capacity")control='<select class="input tco-sheet-input" data-input="tco-new" data-key="capacity" aria-label="'+esc(label)+'"><option value="">'+tr("Pilih kapasitas","Select capacity")+'</option>'+batteryOptions+'</select>';
-        else if(key==="replacementQty"||key==="replacementPrice")control='<input class="input tco-sheet-input" value="'+esc(fixed)+'" readonly aria-label="'+esc(label)+'">';
+        else if(key==="replacementQty")control='<input class="input tco-sheet-input" type="number" min="0" step="1" data-input="tco-new" data-key="replacementQty" value="'+esc(p.replacementQty===""?fixed:p.replacementQty)+'" aria-label="'+esc(label)+'">';
+        else if(key==="replacementPrice")control='<input class="input tco-sheet-input" type="text" inputmode="numeric" data-input="tco-new" data-key="replacementPrice" value="'+esc(p.replacementPrice===""?fixed:tcoInputMoney(p.replacementPrice))+'" aria-label="'+esc(label)+'">';
         else control='<input class="input tco-sheet-input" type="'+(tcoIsMoneyField(key)?"text":"number")+'" '+(tcoIsMoneyField(key)?'inputmode="numeric"': 'min="0" step="any"')+' data-input="tco-new" data-key="'+key+'" value="'+esc(tcoIsMoneyField(key)?tcoInputMoney(p[key]):p[key])+'" aria-label="'+esc(label)+'">';
         return '<td class="tco-sheet-label">'+label+'</td><td class="tco-sheet-value">'+control+'</td><td class="tco-sheet-unit">'+unit+'</td>';
       }
@@ -935,7 +945,7 @@
           brands.forEach(function(b,i){var col=i%2,row=Math.floor(i/2),x=48+col*560,y=cardTop+row*88;c.fillStyle="#fff";c.fillRect(x,y,540,76);c.strokeStyle=line;c.strokeRect(x,y,540,76);c.fillStyle=b.color;c.fillRect(x,y,7,76);txt(b.name,x+22,y+28,15,muted,true);txt(tcoMoney(b.total),x+22,y+60,22,ink,true);});
           txt(tr("Proyeksi biaya kumulatif","Cumulative cost projection")+" · "+fmtNum(results.years)+" "+tr("tahun","years"),48,chartTop-28,19,ink,true);
           var gx=150,gy=chartTop,gw=980,gh=225,max=1,chartYears=Math.ceil(results.years);
-          function projected(b,y){var elapsed=Math.min(y,results.years),events=b.group==="lead"?Math.floor(Math.max(0,Math.min(y,results.years-.000001))/Math.max(1,Math.ceil(b.lifeYears))):0;return y===0?0:b.initial+b.annual*elapsed+events*b.replacementQty*b.batteryPrice;}
+          function projected(b,y){var elapsed=Math.min(y,results.years),eventCount=b.group==="lead"?Math.max(0,Math.ceil(results.years/b.lifeYears)-1):0,events=eventCount?Math.min(eventCount,Math.floor(Math.max(0,Math.min(y,results.years-.000001))/Math.max(1,b.lifeYears))):0,replacements=eventCount?Math.floor(events*b.replenishment/eventCount):0;return y===0?0:b.initial+b.annual*elapsed+replacements*b.replacementUnitPrice;}
           brands.forEach(function(b){for(var yr=0;yr<=chartYears;yr++)max=Math.max(max,projected(b,yr));});
           for(var tick=0;tick<=4;tick++){var v=max*tick/4,yy=gy+gh-(v/max)*gh;c.strokeStyle=line;c.beginPath();c.moveTo(gx,yy);c.lineTo(gx+gw,yy);c.stroke();txt(tcoMoney(v),50,yy+4,11,muted,false);}
           brands.forEach(function(b){c.strokeStyle=b.color;c.lineWidth=3;c.beginPath();for(var yr=0;yr<=chartYears;yr++){var xx=gx+gw*yr/Math.max(1,chartYears),yy=gy+gh-(projected(b,yr)/max)*gh;if(yr===0)c.moveTo(xx,yy);else c.lineTo(xx,yy);}c.stroke();});
@@ -1345,7 +1355,7 @@
       if(el.dataset.brandId){
         var list=state.tco.brands[el.dataset.group]||[],brand=list.find(function(item){return item.id===el.dataset.brandId;});
         if(brand){if(key==="brandName"){brand.name=el.value;brand.customName=true;}else if(key==="brandBatteryPrice")brand.batteryPrice=el.value;else if(key==="brandChargerPrice")brand.chargerPrice=el.value;}
-      }else if(key==="model"){state.tco.model=el.value;state.tco.capacity="";}
+      }else if(key==="model")state.tco.model=el.value;
       else if(key==="capacity")state.tco.capacity=el.value;
       else if(["leadBatteryPrice","leadChargerPrice","lithiumBatteryPrice","lithiumChargerPrice"].indexOf(key)>=0)state.tco[key]=el.value;
       else state.tco.params[key]=el.value;
@@ -1360,7 +1370,15 @@
         if(!el.checked&&!state.tco.chartOptions[otherSeries]){el.checked=true;return;}
         state.tco.chartOptions[el.dataset.series]=el.checked;tcoRefreshLiveOutput();return;
       }
-      if(input==="tco-new"){tcoRefreshLiveOutput();return;}
+      if(input==="tco-new"){
+        if(el.dataset.key==="model"){
+          state.tco.model=el.value;
+          var selectedModel=tcoSelectedModel(),validCapacities=(selectedModel&&selectedModel.battery_options||[]).map(function(option){return Number(option.ah);});
+          if(validCapacities.indexOf(Number(state.tco.capacity))<0)state.tco.capacity=validCapacities.length?String(validCapacities[0]):"";
+          render();return;
+        }
+        tcoRefreshLiveOutput();return;
+      }
       var slot=el.dataset.slot,t=slot?state.trucks[Number(slot.slice(1))-1]:null;
       if(input==="viz-result"){var key=String(el.dataset.index)+"|"+String(el.dataset.ah);if(!el.checked&&state.visualResultKeys.length<=1)state.visualResultKeys=[key];else state.visualResultKeys=el.checked?(state.visualResultKeys.indexOf(key)>=0?state.visualResultKeys:state.visualResultKeys.concat([key])):state.visualResultKeys.filter(function(item){return item!==key;});}
       else if(input==="truck-type"&&t){t.type=el.value||null;t.series=null;t.model=null;t.batteries=[];t.charger=null;t.mode="Standard";}
