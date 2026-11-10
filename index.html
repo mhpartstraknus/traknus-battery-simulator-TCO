@@ -199,13 +199,14 @@
     .tco-input-table .tco-sheet-label {width:43%;text-align:left}
     .tco-input-table .tco-sheet-value {width:25%;padding:2px;text-align:center}
     .tco-input-table .tco-sheet-unit {width:14%;color:var(--muted);white-space:nowrap;text-align:center}
-    .tco-sheet-input {width:100%;max-width:none;height:30px!important;min-height:30px!important;padding:3px 8px!important;border:0!important;border-radius:0!important;background:#fffdb8!important;color:#202b32!important;text-align:center;font:inherit}
+    .tco-sheet-input {display:block;width:100%!important;min-width:0!important;max-width:none!important;box-sizing:border-box;height:30px!important;min-height:30px!important;padding:3px 8px!important;border:0!important;border-radius:0!important;background:#fff6cc!important;color:#202b32!important;text-align:center;font:inherit}
     .tco-sheet-input[type="text"] {appearance:none}
     .tco-price-field {appearance:textfield}
     .tco-missing-price-note {margin:12px 0;padding:12px 14px;border:1px solid #e7cf8b;border-radius:10px;background:#fff9df;color:#5e4b1b}
     .tco-missing-price-note strong {font-weight:800}
-    .tco-sheet-input:read-only {cursor:default}
-    .tco-sheet-note {margin:8px 0 0;font-size:.82rem}
+    .tco-sheet-input:read-only {cursor:default;background:#eef2f3!important;color:#596a70!important}
+    .tco-sheet-note {display:flex;align-items:center;gap:7px;margin:8px 0 0;font-size:.82rem;color:var(--muted)}
+    .tco-sheet-note-swatch {display:inline-block;width:16px;height:16px;flex:0 0 16px;border:1px solid #e4d89f;border-radius:4px;background:#fff6cc}
     .tco-price-grid {grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:16px}
     .tco-battery-input {margin:16px 0;padding:20px}
     .tco-battery-input h3 {margin:0 0 14px}
@@ -821,10 +822,11 @@
         var lines="",lineLegend="";
         results.brands.forEach(function(b,index){
           var points=annualRows.map(function(row,i){return [left+slot*(i+.5),top+plotH-(row[index].cumulative/cumulativeMax)*plotH];});
-          if(showLines)lines+='<polyline points="'+points.map(function(pt){return pt[0].toFixed(1)+","+pt[1].toFixed(1);}).join(" ")+'" fill="none" stroke="'+b.color+'" stroke-width="2.5" stroke-dasharray="7 5"/>'+points.map(function(pt,i){var year=i+1,val=annualRows[i][index].cumulative;return '<circle cx="'+pt[0].toFixed(1)+'" cy="'+pt[1].toFixed(1)+'" r="7" fill="'+b.color+'" stroke="var(--panel)" stroke-width="2" tabindex="0"><title>'+esc(b.name)+' · '+tr("TCO kumulatif tahun ","Cumulative TCO in year ")+year+': '+esc(tcoMoney(val))+'</title></circle>';}).join("");
+          if(showLines)lines+='<polyline points="'+points.map(function(pt){return pt[0].toFixed(1)+","+pt[1].toFixed(1);}).join(" ")+'" fill="none" stroke="'+b.color+'" stroke-width="2.5" stroke-dasharray="7 5"/>'+points.map(function(pt,i){var year=i+1,val=annualRows[i][index].cumulative;return '<circle cx="'+pt[0].toFixed(1)+'" cy="'+pt[1].toFixed(1)+'" r="10" fill="transparent" stroke="transparent" tabindex="0"><title>'+esc(b.name)+' · '+tr("TCO kumulatif tahun ","Cumulative TCO in year ")+year+': '+esc(tcoMoney(val))+'</title></circle><circle cx="'+pt[0].toFixed(1)+'" cy="'+pt[1].toFixed(1)+'" r="4.2" fill="'+b.color+'" stroke="var(--panel)" stroke-width="1.4" pointer-events="none"/>';}).join("");
           if(showLines)lineLegend+='<span class="tco-legend-item"><i class="tco-line-legend" style="--line-color:'+b.color+'"></i>'+esc(b.name)+' · '+tr("TCO kumulatif","Cumulative TCO")+'</span>';
         });
         var barLegend=showBars?categories.map(function(c){return '<span class="tco-legend-item"><i style="background:'+c.color+'"></i>'+esc(c.label)+'</span>';}).join(""):"";
+        xLabels+='<text x="'+(left+plotW/2)+'" y="'+(height-6)+'" text-anchor="middle" fill="var(--muted)" font-size="11">'+esc(tr("Tahun penggunaan","Year in use"))+'</text>';
         var svg='<svg class="tco-projection-chart tco-year-chart" viewBox="0 0 '+width+' '+height+'" role="img" aria-label="'+esc(tr("Biaya tahunan dan TCO kumulatif per tahun","Annual cost and cumulative TCO by year"))+'">'+grid+bars+lines+xLabels+'</svg>';
         var lineExplain=showLines?tr("Garis putus-putus = akumulasi biaya sampai tahun tersebut.","Dashed line = cost accumulated through that year."):"";
         return '<section class="tco-chart-card tco-yearly-chart-card"><h3>'+tr("Biaya tahunan dan TCO kumulatif per tahun","Annual cost and cumulative TCO by year")+'</h3><div class="tco-axis-captions"><span>'+(showBars?tr("Batang = biaya pada tahun tersebut.","Bars = cost in that year."):"")+'</span><span>'+lineExplain+'</span></div><div class="tco-projection-chart-wrap">'+svg+'</div><div class="tco-legend">'+barLegend+lineLegend+'</div></section>';
@@ -838,7 +840,7 @@
         var legend=cats.map(function(c){return '<span class="tco-legend-item"><i style="background:'+c.color+'"></i>'+esc(c.label)+'</span>';}).join("");
         return '<section class="tco-chart-card"><h3>'+title+'</h3><div class="tco-projection-chart-wrap"><svg class="tco-projection-chart tco-stack-chart" viewBox="0 0 '+width+' '+height+'" role="img" aria-label="'+esc(title)+'">'+grid+bars+labels+'</svg></div><div class="tco-legend">'+legend+'</div></section>';
       }
-      return '<div class="tco-chart-controls"><label class="tco-chart-toggle"><input type="checkbox" data-input="tco-chart" data-series="annualBars" '+(state.tco.chartOptions.annualBars?'checked':'')+'><span>'+tr("Batang biaya tahunan","Annual cost bars")+'</span></label><label class="tco-chart-toggle"><input type="checkbox" data-input="tco-chart" data-series="cumulativeLines" '+(state.tco.chartOptions.cumulativeLines?'checked':'')+'><span>'+tr("Garis putus-putus TCO kumulatif","Cumulative TCO dashed lines")+'</span></label></div><p class="tco-chart-explainer">'+tr("Arahkan kursor ke batang atau titik untuk melihat nilai tepatnya. Total biaya adalah gabungan semua komponen.","Hover over a bar or point to see its exact value. Total cost combines all cost components.")+'</p><div class="tco-chart-grid">'+tcoYearChart()+costMixChart(tr("Total biaya","Total Cost"),["forklift","battery","exchange","electricity","watering","replenishment","other"])+costMixChart(tr("Biaya berjalan","Running Cost"),["exchange","electricity","watering","replenishment"])+costMixChart(tr("Biaya terkait baterai","Battery Related Cost"),["battery","exchange","replenishment"])+'</div>';
+      return '<div class="tco-chart-controls"><label class="tco-chart-toggle"><input type="checkbox" data-input="tco-chart" data-series="annualBars" '+(state.tco.chartOptions.annualBars?'checked':'')+'><span>'+tr("Biaya tahunan","Annual cost")+'</span></label><label class="tco-chart-toggle"><input type="checkbox" data-input="tco-chart" data-series="cumulativeLines" '+(state.tco.chartOptions.cumulativeLines?'checked':'')+'><span>'+tr("TCO kumulatif","Cumulative TCO")+'</span></label></div><p class="tco-chart-explainer">'+tr("Arahkan kursor ke batang atau titik untuk melihat nilai tepatnya. Total biaya adalah gabungan semua komponen.","Hover over a bar or point to see its exact value. Total cost combines all cost components.")+'</p><div class="tco-chart-grid">'+tcoYearChart()+costMixChart(tr("Total biaya","Total Cost"),["forklift","battery","exchange","electricity","watering","replenishment","other"])+costMixChart(tr("Biaya berjalan","Running Cost"),["exchange","electricity","watering","replenishment"])+costMixChart(tr("Biaya terkait baterai","Battery Related Cost"),["battery","exchange","replenishment"])+'</div>';
     }
     function tcoWorkbookInputBlock() {
       var p=state.tco.params,model=tcoSelectedModel(),t=state.tco;
@@ -892,7 +894,7 @@
         return '<td class="tco-sheet-label">'+label+'</td><td class="tco-sheet-value">'+control+'</td><td class="tco-sheet-unit">'+unit+'</td>';
       }
       var body=groups.map(function(group){return group.rows.map(function(row,index){return '<tr class="tco-sheet-row" style="--sheet-group-color:'+group.color+'">'+(index===0?'<th class="tco-sheet-group" rowspan="'+group.rows.length+'">'+esc(group.name)+'</th>':"")+cell(row)+'</tr>';}).join("");}).join("");
-      return '<details class="tco-assumptions" open><summary>'+tr("Parameter perhitungan","Calculation parameters")+'</summary><div class="report-table-wrap tco-sheet-wrap"><table class="tco-input-table"><colgroup><col style="width:18%"><col style="width:43%"><col style="width:25%"><col style="width:14%"></colgroup><tbody>'+body+'</tbody></table></div></details>';
+      return '<details class="tco-assumptions" open><summary>'+tr("Parameter perhitungan","Calculation parameters")+'</summary><p class="tco-sheet-note"><span class="tco-sheet-note-swatch" aria-hidden="true"></span>'+tr("Sel kuning adalah kolom input yang bisa diisi atau diubah.","Yellow cells are inputs you can fill in or change.")+'</p><div class="report-table-wrap tco-sheet-wrap"><table class="tco-input-table"><colgroup><col style="width:18%"><col style="width:43%"><col style="width:25%"><col style="width:14%"></colgroup><tbody>'+body+'</tbody></table></div></details>';
     }
     function tcoOutputHtml(results) {
       if(results){
