@@ -659,7 +659,7 @@
     function scheduleScreen() {
       
       var html=progressView(2);
-      html+='<section class="panel"><div class="panel-head"><div><div class="eyebrow-small">'+tr("Jadwal shift","Shift schedule")+'</div><h2>'+tr("Atur waktu tiap shift","Set each shift’s timing")+'</h2><p class="sub">'+tr("Atur jam mulai, waktu istirahat, dan pengisian daya untuk tiap shift.","Set each shift’s start time, breaks, and charging.")+'</p></div></div><div class="stat-grid"><article class="stat"><div class="stat-label">'+tr("Target jam kerja harian","Daily workday target")+'</div><div class="stat-value">'+fmtHours(state.workdayHours)+' '+tr("jam","hours")+'</div></article></div>'+scheduleView()+'<div class="button-row"><div class="button-group">'+menuBackButtonHtml()+'<button class="secondary" data-act="back-conditions"><span class="nav-arrow" aria-hidden="true">←</span>'+tr("Ubah kondisi kerja","Edit working conditions")+'</button></div><button class="primary" data-act="continue-trucks">'+tr("Lihat Analisis","View Analysis")+' <span class="nav-arrow" aria-hidden="true">→</span></button></div></section>';
+      html+='<section class="panel"><div class="panel-head"><div><div class="eyebrow-small">'+tr("Jadwal shift","Shift schedule")+'</div><h2>'+tr("Atur waktu tiap shift","Set each shift’s timing")+'</h2><p class="sub">'+tr("Atur jam mulai, waktu istirahat, dan pengisian daya untuk tiap shift.","Set each shift’s start time, breaks, and charging.")+'</p></div></div><div class="stat-grid"><article class="stat"><div class="stat-label">'+tr("Target jam kerja harian","Daily workday target")+'</div><div class="stat-value">'+fmtHours(state.workdayHours)+' '+tr("jam","hours")+'</div></article></div>'+scheduleView()+'<div class="button-row"><div class="button-group">'+menuBackButtonHtml()+'<button class="secondary" data-act="back-conditions"><span class="nav-arrow" aria-hidden="true">←</span>'+tr("Ubah kondisi kerja","Edit working conditions")+'</button></div><button class="primary" data-act="show-analysis">'+tr("Lihat Analisis","View Analysis")+' <span class="nav-arrow" aria-hidden="true">→</span></button></div></section>';
       return html;
     }
     function truckScreen() {
@@ -1404,7 +1404,7 @@
         }
         ensureSchedule();state.screen="schedule";
       }
-      else if(act==="continue-trucks"){state.screen=validSetup()?"analysis":"trucks";if(state.screen==="analysis")logSimulatorAnalysis();}
+      else if(act==="show-analysis"){var setupError=validSetup();if(setupError){alert(setupError);state.screen="unit-choice";}else{state.screen="analysis";logSimulatorAnalysis();}}
       else if(act==="back-conditions")state.screen="conditions";
       else if(act==="back-schedule")state.screen="schedule";
       else if(act==="back-trucks"){state.visualResultKeys=null;state.screen="trucks";}
