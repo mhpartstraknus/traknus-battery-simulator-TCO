@@ -172,11 +172,12 @@
     .charge-toggle button.selected {background:var(--green-soft);color:var(--green);box-shadow:inset 0 0 0 2px var(--green);font-weight:850}
     .small-btn {border:1px solid var(--line);background:var(--panel);border-radius:9px;padding:7px 10px;font-size:.82rem;font-weight:750;cursor:pointer}
     .small-btn:hover {border-color:var(--blue)}
-    .primary,.secondary {border:0;border-radius:13px;padding:13px 18px;font-weight:850;cursor:pointer;transition:.15s ease}
-    .primary {background:var(--red);color:white;box-shadow:0 8px 18px rgba(207,55,64,.16)}
-    .primary:hover {filter:brightness(.95);transform:translateY(-1px)}
-    .secondary {background:var(--panel-soft);border:1px solid var(--line);color:var(--ink)}
-    .secondary:hover {border-color:var(--blue)}
+    .primary,.secondary {border:1px solid var(--line);border-radius:13px;padding:13px 18px;font-weight:850;cursor:pointer;transition:background-color .15s ease,color .15s ease,border-color .15s ease,transform .15s ease,box-shadow .15s ease}
+    .primary,.secondary {background:var(--panel-soft);color:var(--ink);box-shadow:none}
+    .primary:hover,.secondary:hover {background:var(--red);border-color:var(--red);color:#fff;transform:translateY(-1px);box-shadow:0 7px 16px rgba(207,55,64,.16)}
+    .primary:active,.secondary:active {background:#a92b34;border-color:#a92b34;color:#fff;transform:translateY(0) scale(.98);box-shadow:inset 0 2px 4px rgba(0,0,0,.2)}
+    .primary:focus-visible,.secondary:focus-visible {outline:3px solid rgba(34,104,167,.3);outline-offset:2px}
+    .primary:disabled,.secondary:disabled {opacity:.55;cursor:not-allowed;transform:none;box-shadow:none}
     .add-truck-btn {background:var(--blue-soft);border-color:var(--blue);color:var(--blue)}
     .add-truck-btn:hover {background:var(--blue-soft);border-color:var(--blue);box-shadow:0 6px 16px rgba(34,104,167,.12);transform:translateY(-1px)}
     .add-truck-btn:disabled {opacity:.5;cursor:not-allowed;box-shadow:none;transform:none}
@@ -1416,7 +1417,7 @@
         }
         ensureSchedule();state.screen="schedule";
       }
-      else if(act==="continue-trucks"){state.screen=validSetup()?"analysis":"trucks";if(state.screen==="analysis")logSimulatorAnalysis();}
+      else if(act==="continue-trucks"){var setupError=validSetup();if(setupError){alert(setupError);return;}state.screen="analysis";logSimulatorAnalysis();}
       else if(act==="back-conditions")state.screen="conditions";
       else if(act==="back-schedule")state.screen="schedule";
       else if(act==="back-trucks"){state.visualResultKeys=null;state.screen="trucks";}
