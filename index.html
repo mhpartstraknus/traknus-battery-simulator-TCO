@@ -470,9 +470,9 @@
     var truckColors=["#c13e45","#3276a8","#56825e","#9b65a8","#d08c32","#438b8b"];
     function tr(id,en) { return state.lang==="id" ? id : en; }
     function titleCaseDisplayText(text){
-      var lowerId=new Set(["di","ke","dan","yang","dari","untuk","pada","dengan","atau","dalam","sebagai","oleh","ini","itu","vs"]);
+      var lowerId=new Set(["di","ke","dan","yang","dari","untuk","pada","dengan","atau","dalam","sebagai","oleh","ini","itu","vs","and"]);
       var lowerEn=new Set(["of","and","in","the","to","for","with","a","an","on","at","by","from","vs"]);
-      var canonical={"t-lite":"T-LITE","tco":"TCO","ah":"Ah","ah/h":"Ah/h","kwh":"kWh","rp":"Rp","rp/kwh":"Rp/kWh","pdf":"PDF","en":"EN","id":"ID","soc":"SOC","html":"HTML","css":"CSS","api":"API","wrs":"WRS","iphone":"iPhone","ipad":"iPad","javascript":"JavaScript","github":"GitHub","whatsapp":"WhatsApp"};
+      var canonical={"t-lite":"T-LITE","tco":"TCO","ah":"Ah","ah/h":"Ah/h","kwh":"kWh","rp":"Rp","rp/kwh":"Rp/kWh","pt":"PT","pdf":"PDF","en":"EN","id":"ID","soc":"SOC","html":"HTML","css":"CSS","api":"API","wrs":"WRS","iphone":"iPhone","ipad":"iPad","javascript":"JavaScript","github":"GitHub","whatsapp":"WhatsApp"};
       return text.replace(/\b[\p{L}\p{N}]+(?:[-/'][\p{L}\p{N}]+)*\b/gu,function(word,index,whole){
         if(/\d/.test(word))return word;
         var key=word.toLocaleLowerCase();
