@@ -464,6 +464,123 @@
       firstStart:"08:00", shiftStarts:[], breaks:[[]], visualResultKeys:null
     };
     var app = document.getElementById("app");
+    var TLITE_EMAIL_LOGGER_URL = "https://script.google.com/macros/s/AKfycbz9fVg85Q5V773mVquWFHlXeAe2NWQLHjlCiCiopIzwU_WfzMknOHbPz1Hz2rkk65yX/exec";
+    function setAnalysisEmailStatus(message) {
+      var status = document.getElementById("tlite-email-status");
+      if (status) status.textContent = message;
+    }
+    function sendAnalysisRecord(type, report) {
+      var payload = {
+        type: type,
+        requestId: "tlite-" + type + "-" + Date.now() + "-" + Math.random().toString(36).slice(2, 9),
+        timestamp: new Date().toISOString(),
+        customer: {
+          company: state.customer.company || "",
+          location: state.customer.location || "",
+          salesperson: state.customer.salesperson || ""
+        },
+        report: report
+      };
+      fetch(TLITE_EMAIL_LOGGER_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {"Content-Type": "text/plain;charset=UTF-8"},
+        body: JSON.stringify(payload)
+      }).then(function () {
+        setAnalysisEmailStatus(tr("Permintaan pencatatan analisis dikirim. Periksa email penerima.", "Analysis logging request sent. Check the recipient inboxes."));
+      }).catch(function (error) {
+        console.error("T-LITE analysis logging failed", error);
+        setAnalysisEmailStatus(tr("Analisis belum berhasil dikirim ke email. Coba lagi nanti.", "The analysis could not be sent by email. Please try again later."));
+      });
+    }
+    function buildSimulatorEmailReport() {
+      ensureSchedule();
+      var configs = allConfigs();
+      var shifts = [];
+      for (var i = 0; i < state.shiftCount; i++) {
+        shifts.push({
+          number: i + 1,
+          startTime: fmtClock(shiftStart(i)),
+          durationHours: shiftLength(i),
+          breaks: state.breaks[i].map(function (item, j) {
+            return {
+              number: j + 1,
+              startTime: fmtClock(breakStart(i, j)),
+              durationMinutes: Number(item.length || 0),
+              charging: !!item.charge
+            };
+          })
+        });
+      }
+      return {
+        analysisType: "Battery Simulator",
+        workHoursPerDay: state.workdayHours,
+        shiftCount: state.shiftCount,
+        shifts: shifts,
+        forklifts: configs.map(function (config) {
+          var truck = config.truck, spec = config.spec;
+          var batteries = (spec.battery_options || []).filter(function (battery) {
+            return truck.batteries.indexOf(battery.ah) >= 0;
+          }).map(function (battery) {
+            var result = simulate(config, battery);
+            return {
+              capacityAh: battery.ah,
+              remainingPercentAtEnd: result.end,
+              estimatedRuntimeHours: result.runtime,
+              consumptionAhPerHour: result.draw,
+              chargeReferenceAmps: chargerRefForCapacity(spec, battery, truck)
+            };
+          });
+          return {
+            name: truck.name,
+            type: truck.type,
+            model: spec.model,
+            operatingMode: modeName(truck.mode),
+            workIntensity: intensityName(selectedIntensity(truck)),
+            liftHeight: liftName(selectedLift(truck, spec)),
+            batteries: batteries
+          };
+        })
+      };
+    }
+    function buildTcoEmailReport(results) {
+      var p = results.params;
+      return {
+        analysisType: "Total Cost of Ownership (TCO)",
+        model: results.model,
+        batteryCapacityAh: results.brands.length ? results.brands[0].capacity : Number(state.tco.capacity),
+        voltageV: results.brands.length ? results.brands[0].voltage : null,
+        operationPeriodYears: results.years,
+        inputs: {
+          forkliftUnits: tcoParse(p.units),
+          workingDaysPerYear: tcoParse(p.workingDays),
+          workingHoursPerDay: tcoParse(p.workHours),
+          laborCostPerHourRp: tcoParse(p.laborPerHour),
+          forkliftPricePerUnitRp: tcoParse(p.forkliftPrice),
+          leadAcidBatteryPriceRp: tcoParse(state.tco.leadBatteryPrice),
+          leadAcidChargerPriceRp: tcoParse(state.tco.leadChargerPrice),
+          lithiumBatteryPriceRp: tcoParse(state.tco.lithiumBatteryPrice),
+          lithiumChargerPriceRp: tcoParse(state.tco.lithiumChargerPrice),
+          electricityRateRpPerKwh: tcoParse(p.electricityRate)
+        },
+        brands: results.brands.map(function (brand) {
+          return {
+            name: brand.name,
+            category: brand.group,
+            initialCostRp: brand.initial,
+            annualRunningCostRp: brand.annual,
+            runningCostOverPeriodRp: brand.annual * results.years,
+            replacementCostRp: brand.replenishment * brand.replacementUnitPrice,
+            totalCostRp: brand.total,
+            batteryReplacementQuantity: brand.replenishment,
+            costBreakdown: brand.breakdown.map(function (item) {
+              return {component: item.key, initialCostRp: item.initial, runningCostOverPeriodRp: item.running};
+            })
+          };
+        }),
+        savingsLeadAcidVsLithiumRp: results.saving
+      };
+    }
     function newTruck(name) {
       return {name:name,type:null,series:null,model:null,batteries:[],mode:"Standard",charger:null,intensity:"High",lift:"All"};
     }
@@ -974,13 +1091,13 @@
       if(live)live.innerHTML=tcoMissingPriceNote()+tcoOutputHtml(results);
       if(print)print.innerHTML=results?tcoPrintReport(results):"";
       applyTitleCaseDisplay(live);applyTitleCaseDisplay(print);
-      var share=app.querySelector('[data-act="tco-share"]'),printButton=app.querySelector('[data-act="tco-print"]');
-      if(share)share.disabled=!results;if(printButton)printButton.disabled=!results;
+      var share=app.querySelector('[data-act="tco-share"]'),printButton=app.querySelector('[data-act="tco-print"]'),emailButton=app.querySelector('[data-act="tco-email"]');
+      if(share)share.disabled=!results;if(printButton)printButton.disabled=!results;if(emailButton)emailButton.disabled=!results;
     }
     function tcoScreen() {
       var results=tcoResults();
       var html='<section class="panel"><div class="panel-head"><div><div class="eyebrow-small">'+tr("Kalkulator biaya baterai","Battery Cost Calculator")+'</div><h2>'+tr("Total Biaya Kepemilikan (TCO)","Total Cost of Ownership (TCO)")+'</h2><p class="sub">'+tr("Isi harga baterai dan charger untuk tiap merek. Setelah keduanya terisi, merek itu masuk ke tabel dan grafik.","Enter the battery and charger price for each brand. A brand appears in the table and charts after both prices are entered.")+'</p></div></div>'+customerSummary()+tcoBatteryInputBlock("lead",tr("Lead Acid","Lead Acid"),"lead")+tcoBatteryInputBlock("lithium",tr("Baterai Lithium Traknus","Traknus Lithium"),"lithium")+tcoWorkbookInputBlock()+'<div id="tco-live-output">'+tcoMissingPriceNote()+tcoOutputHtml(results)+'</div>';
-      html+='<div class="button-row">'+menuBackButtonHtml()+'<div class="button-group"><button class="secondary" data-act="tco-share" '+(!results?'disabled':'')+'><svg class="share-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.7 10.7l6.6-4.4M8.7 13.3l6.6 4.4"></path></svg>'+tr("Bagikan","Share")+'</button><button class="primary" data-act="tco-print" '+(!results?'disabled':'')+'>⌑ '+tr("Cetak / simpan PDF","Print / save PDF")+'</button><button class="secondary" data-act="start-over">'+tr("Mulai dari awal","Start over")+'</button></div></div></section><div id="tco-live-print">'+(results?tcoPrintReport(results):"")+'</div>';
+      html+='<div class="button-row">'+menuBackButtonHtml()+'<div class="button-group"><button class="secondary" data-act="tco-share" '+(!results?'disabled':'')+'><svg class="share-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.7 10.7l6.6-4.4M8.7 13.3l6.6 4.4"></path></svg>'+tr("Bagikan","Share")+'</button><button class="secondary" data-act="tco-email" '+(!results?'disabled':'')+'>'+tr("Kirim Analisis","Email Analysis")+'</button><button class="primary" data-act="tco-print" '+(!results?'disabled':'')+'>⌑ '+tr("Cetak / simpan PDF","Print / save PDF")+'</button><button class="secondary" data-act="start-over">'+tr("Mulai dari awal","Start over")+'</button></div></div><div class="inline-note" id="tlite-email-status" role="status" aria-live="polite" style="margin-top:10px"></div></section><div id="tco-live-print">'+(results?tcoPrintReport(results):"")+'</div>';
       return html;
     }
     function tcoPrintReport(results) {
@@ -1321,7 +1438,7 @@
       html+='<div class="chart-wrap">'+chartSvg(visibleResults)+'</div><div class="legend">'+visibleResults.map(function(r){return '<div class="legend-item"><span class="legend-line" style="border-color:'+resultColor(r)+';border-top-style:'+resultDashStyle(r)+'"></span>'+esc(r.label)+'</div>';}).join("")+'</div>';
       html+='<p class="chart-caption">'+tr("Warna garis menandai forklift; pola garis membedakan kapasitas baterai.","Line colors identify forklifts; line patterns distinguish battery capacities.")+'</p>'+breakTimeline()+'</section>';
       html+='<section class="panel"><div class="panel-head"><div><h2>'+tr("Ringkasan tiap pilihan baterai","Summary for each battery option")+'</h2><p class="sub">'+tr("Lihat sisa baterai di akhir jadwal dan perkiraan waktu operasi tanpa henti.","See the remaining battery at the end of the schedule and estimated nonstop runtime.")+'</p></div></div><div class="stat-grid">'+visibleResults.map(function(r){return '<article class="stat"><div class="stat-label">'+esc(r.label)+'</div><div class="stat-value">'+fmtNum(r.end)+'% <span style="font-size:.72rem;color:var(--muted)">'+tr("Sisa akhir jadwal","remaining at end")+'</span></div><div class="sub" style="margin-top:6px">'+tr("Operasi tanpa henti","Nonstop")+': <strong>'+fmtNum(r.runtime)+' '+tr("jam","hours")+'</strong></div></article>';}).join("")+'</div>';
-      html+='<div class="analysis-action-notes"><div class="sub">'+tr("Estimasi mengikuti faktor dari data model; kondisi lapangan dapat berbeda.","Estimates follow the model data; actual results may vary with operating conditions.")+'</div><div class="print-hint">'+(isIOS()?tr("Di iPhone/iPad: pada pratinjau cetak, ketuk Share lalu Save to Files.","On iPhone/iPad: in print preview, tap Share, then Save to Files."):tr("Pilih “Simpan sebagai PDF” pada jendela cetak.","Choose “Save as PDF” in the print window."))+'</div><div class="print-hint">'+tr("Pilih aplikasi berbagi yang tersedia, lalu periksa penerima dan tekan Kirim.","Choose an available sharing app, then check the recipient and press Send.")+'</div></div><div class="button-row analysis-action-row">'+menuBackButtonHtml()+'<div class="button-group"><button class="secondary" data-act="back-trucks">← '+tr("Ubah pilihan forklift","Edit forklift choices")+'</button><button class="primary" data-act="print">⌑ '+tr("Cetak / simpan PDF","Print / save PDF")+'</button><button class="secondary" data-act="email-report"><svg class="share-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.7 10.7l6.6-4.4M8.7 13.3l6.6 4.4"></path></svg>'+tr("Bagikan","Share")+'</button></div></div></section>';
+      html+='<div class="analysis-action-notes"><div class="sub">'+tr("Estimasi mengikuti faktor dari data model; kondisi lapangan dapat berbeda.","Estimates follow the model data; actual results may vary with operating conditions.")+'</div><div class="print-hint">'+(isIOS()?tr("Di iPhone/iPad: pada pratinjau cetak, ketuk Share lalu Save to Files.","On iPhone/iPad: in print preview, tap Share, then Save to Files."):tr("Pilih “Simpan sebagai PDF” pada jendela cetak.","Choose “Save as PDF” in the print window."))+'</div><div class="print-hint">'+tr("Pilih aplikasi berbagi yang tersedia, lalu periksa penerima dan tekan Kirim.","Choose an available sharing app, then check the recipient and press Send.")+'</div></div><div class="button-row analysis-action-row">'+menuBackButtonHtml()+'<div class="button-group"><button class="secondary" data-act="back-trucks">← '+tr("Ubah pilihan forklift","Edit forklift choices")+'</button><button class="primary" data-act="print">⌑ '+tr("Cetak / simpan PDF","Print / save PDF")+'</button><button class="secondary" data-act="email-report"><svg class="share-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.7 10.7l6.6-4.4M8.7 13.3l6.6 4.4"></path></svg>'+tr("Bagikan","Share")+'</button></div></div><div class="inline-note" id="tlite-email-status" role="status" aria-live="polite" style="margin-top:10px"></div></section>';
       html+=printReport(configs,visibleResults);
       return html;
     }
@@ -1378,6 +1495,7 @@
       else if(act==="add-brand"){var group=b.dataset.group,list=state.tco.brands[group]||[],brandNum=list.length+2;list.push({id:String(state.tco.nextBrandId++),name:"",defaultIndex:brandNum,customName:false,batteryPrice:"",chargerPrice:""});state.tco.brands[group]=list;}
       else if(act==="remove-brand"){var group=b.dataset.group;state.tco.brands[group]=(state.tco.brands[group]||[]).filter(function(item){return item.id!==b.dataset.id;});}
       else if(act==="tco-share"){var currentTcoResults=tcoResults();if(currentTcoResults)shareTcoReport(currentTcoResults);return;}
+      else if(act==="tco-email"){var currentTcoResults=tcoResults();if(currentTcoResults)sendAnalysisRecord("tco",buildTcoEmailReport(currentTcoResults));return;}
       else if(act==="tco-print"){window.print();return;}
       else if(act==="shift-minus")state.shiftCount=Math.max(1,state.shiftCount-1);
       else if(act==="shift-plus")state.shiftCount=Math.min(24,state.shiftCount+1);
@@ -1400,7 +1518,7 @@
       else if(act==="start-over"){location.reload();return;}
       else if(act==="print"){window.print();return;}
       else if(act==="email-report"){emailReport();return;}
-      else if(act==="analyze"){var err=validSetup();if(err){var existing=document.getElementById("formError");if(existing)existing.remove();b.insertAdjacentHTML("afterend",'<span id="formError" class="error">'+esc(err)+'</span>');return;}state.screen="analysis";}
+      else if(act==="analyze"){var err=validSetup();if(err){var existing=document.getElementById("formError");if(existing)existing.remove();b.insertAdjacentHTML("afterend",'<span id="formError" class="error">'+esc(err)+'</span>');return;}sendAnalysisRecord("simulator",buildSimulatorEmailReport());state.screen="analysis";}
       render();
     });
     app.addEventListener("input",function(e){
