@@ -508,10 +508,14 @@
     function modelsForType(type) {
       return CATALOG.models.filter(function(m){return typeOf(seriesOf(m.model))===type;});
     }
+    var MODEL_UNIT_BRANDS={"LPE200":"BT","LWE200":"BT","SWE120":"BT","RRE140":"BT","LHE150":"BT","RRE160":"BT","SWE140":"BT","RRE200H":"BT","SPE160":"BT","8FBN25":"Toyota","8FBN15":"Toyota","8FBN30":"Toyota","4CBTY2":"Toyota","7FB25":"Toyota","8FBR18":"Toyota","8FBR15":"Toyota","7FBR15":"Toyota","7FB30":"Toyota","7FBR18":"Toyota","8FBN20":"Toyota","4CBT2":"Toyota","8FB30":"Toyota","7FB15":"Toyota","8FBRS20":"Toyota","8FB25":"Toyota","7FB20":"Toyota","8FBE15":"Toyota","8FBJ35":"Toyota","8FBE20":"Toyota","7CBTY06":"Toyota","3TE25":"Toyota"};
     function modelBrandOf(model){
-      var raw=String(model.brand||model.brandName||model.manufacturer||model.brand_name||model.make||model.vendor||"").toLowerCase();
-      if(raw.indexOf("raymond")>=0||/^rre/i.test(model.model))return "Raymond";
-      if(raw==="bt"||raw.indexOf("bt ")===0||/^bt[-_ ]/i.test(model.model))return "BT";
+      var name=String(model.model||"").toUpperCase(),mapped=MODEL_UNIT_BRANDS[name];
+      if(mapped)return mapped;
+      var raw=String(model.brand||model.brandName||model.manufacturer||model.brand_name||model.make||model.vendor||model.product||"").toLowerCase();
+      if(raw.indexOf("raymond")>=0)return "BT";
+      if(raw==="bt"||raw.indexOf("bt ")===0||/^(LPE|LWE|SWE|RRE|LHE|SPE)/.test(name))return "BT";
+      if(raw.indexOf("toyota")>=0||/^(8FBN|4CBTY|7FB|8FBR|4CBT|8FB|7CBTY|3TE)/.test(name))return "Toyota";
       return "";
     }
     function batteryOptionsForSpec(spec){
@@ -601,7 +605,7 @@
       if(!t.type) return '<div class="inline-note">'+tr("Pilih tipe dulu. Seri dan model baru muncul setelahnya.","Choose a truck type first. Series and model will appear next.")+'</div>';
       var avail=modelsForType(t.type);
       if(t.type==="WH"){
-        var brands=["BT","Raymond"];
+        var brands=["BT","Toyota"];
         html+='<div class="field wh-brand-picker"><label>'+tr("2 · Pilih merek","2 · Choose a brand")+'</label><div class="choice-row">'+brands.map(function(brand){return '<button class="choice '+(t.brand===brand?"selected":"")+'" data-act="brand" data-slot="'+slot+'" data-value="'+brand+'">'+brand+'</button>';}).join("")+'</div></div>';
         if(!t.brand)return html;
         avail=avail.filter(function(m){return modelBrandOf(m)===t.brand;});
