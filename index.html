@@ -59,8 +59,9 @@
     .hero p {margin-top:8px;font-style:italic;font-weight:750;letter-spacing:.01em}
     .hero p,[data-theme="dark"] .hero p {color:#e0e8fa}
     .hero-machine {position:relative;z-index:1;display:flex;align-items:center;justify-content:center;width:100%;height:190px;padding:0;background:transparent;border-radius:0;box-shadow:none}
-    .hero-battery {display:block;width:100%;height:100%;object-fit:contain;transform:translateX(8px);filter:drop-shadow(0 0 .5px #fff) drop-shadow(0 0 .5px #fff) drop-shadow(0 5px 8px rgba(0,0,0,.18))}
+    .hero-battery {display:block;width:100%;height:100%;object-fit:contain;transform:translateX(20px);filter:drop-shadow(0 0 .5px #fff) drop-shadow(0 0 .5px #fff) drop-shadow(0 5px 8px rgba(0,0,0,.18))}
     .hero-mascot-wrap {position:relative;z-index:1;display:flex;align-items:center;justify-content:center;width:100%;height:190px}
+    .wh-brand-picker {margin-bottom:16px}
     .hero-mascot {display:block;width:min(100%,190px);height:100%;object-fit:contain;filter:drop-shadow(0 7px 10px rgba(0,0,0,.2))}
     .customer-block {margin:22px 0 18px;padding:17px;border:1px solid var(--line);border-radius:16px;background:var(--panel-soft)}
     .customer-block h3 {margin:0 0 4px}
@@ -601,7 +602,7 @@
       var avail=modelsForType(t.type);
       if(t.type==="WH"){
         var brands=["BT","Raymond"];
-        html+='<div class="field"><label>'+tr("2 · Pilih merek","2 · Choose a brand")+'</label><div class="choice-row">'+brands.map(function(brand){return '<button class="choice '+(t.brand===brand?"selected":"")+'" data-act="brand" data-slot="'+slot+'" data-value="'+brand+'">'+brand+'</button>';}).join("")+'</div></div>';
+        html+='<div class="field wh-brand-picker"><label>'+tr("2 · Pilih merek","2 · Choose a brand")+'</label><div class="choice-row">'+brands.map(function(brand){return '<button class="choice '+(t.brand===brand?"selected":"")+'" data-act="brand" data-slot="'+slot+'" data-value="'+brand+'">'+brand+'</button>';}).join("")+'</div></div>';
         if(!t.brand)return html;
         avail=avail.filter(function(m){return modelBrandOf(m)===t.brand;});
         if(!avail.length)return html+'<div class="inline-note">'+tr("Daftar seri WH untuk merek ini menunggu data katalog terbaru.","WH series for this brand are waiting for updated catalog data.")+'</div>';
@@ -976,7 +977,7 @@
       if(results){
         return '<h3 class="tco-comparison-title">'+tr("Perhitungan biaya awal dan berjalan selama ","Calculation showing initial and running cost over ")+fmtNum(results.years)+" "+tr("tahun","years")+'</h3>'+tcoBreakdownTable(results)+'<details class="tco-projection-toggle" open><summary>'+tr("Lihat grafik biaya dan total","View cost charts and totals")+'</summary>'+tcoProjectionSection(results)+'</details>';
       }
-      return '<p class="tco-error" role="status">'+tr("Isi harga baterai dan charger agar perbandingan merek serta grafiknya muncul. Hasil diperbarui otomatis.","Enter the battery and charger prices to show brand comparisons and charts. Results update automatically.")+'</p>';
+      return '<p class="tco-error" role="status">'+tr("Isi harga baterai dan charger untuk Lead Acid dan Lithium Traknus. Merek tambahan opsional; hasil perbandingan dan grafik diperbarui otomatis.","Enter battery and charger prices for Lead Acid and Traknus Lithium. Additional brands are optional; comparisons and charts update automatically.")+'</p>';
     }
     function tcoRefreshLiveOutput(){
       var results=tcoResults(),live=document.getElementById("tco-live-output"),print=document.getElementById("tco-live-print");
