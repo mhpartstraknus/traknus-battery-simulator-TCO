@@ -56,10 +56,10 @@
     .hero-copy {position:relative;z-index:1;width:100%;max-width:760px;text-align:center;margin:0 auto}
     .hero h1 {color:#fff;font-size:clamp(2.2rem,4.5vw,3.5rem);letter-spacing:0;margin:0}
     .hero-expansion {display:block;margin-top:5px;font-size:clamp(.82rem,1.6vw,1.1rem);font-weight:700;letter-spacing:.015em;color:#eef3ff}
-    .hero p {margin-top:8px;font-weight:750;letter-spacing:.01em}
+    .hero p {margin-top:8px;font-style:italic;font-weight:750;letter-spacing:.01em}
     .hero p,[data-theme="dark"] .hero p {color:#e0e8fa}
     .hero-machine {position:relative;z-index:1;display:flex;align-items:center;justify-content:center;width:100%;height:190px;padding:0;background:transparent;border-radius:0;box-shadow:none}
-    .hero-battery {display:block;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 5px 8px rgba(0,0,0,.18))}
+    .hero-battery {display:block;width:100%;height:100%;object-fit:contain;transform:translateX(8px);filter:drop-shadow(0 0 .5px #fff) drop-shadow(0 0 .5px #fff) drop-shadow(0 5px 8px rgba(0,0,0,.18))}
     .hero-mascot-wrap {position:relative;z-index:1;display:flex;align-items:center;justify-content:center;width:100%;height:190px}
     .hero-mascot {display:block;width:min(100%,190px);height:100%;object-fit:contain;filter:drop-shadow(0 7px 10px rgba(0,0,0,.2))}
     .customer-block {margin:22px 0 18px;padding:17px;border:1px solid var(--line);border-radius:16px;background:var(--panel-soft)}
@@ -235,8 +235,8 @@
     .tco-breakdown-table .tco-cost-row {background:color-mix(in srgb,var(--cost-color) 11%,var(--panel))}
     .tco-cost-swatch {display:inline-block;width:10px;height:19px;background:var(--cost-color);border-radius:3px;vertical-align:middle;margin-right:9px}
     .tco-breakdown-table .tco-total-row {background:var(--blue-soft);font-weight:800}
-    .tco-breakdown-table .tco-saving-row {background:var(--green-soft);font-weight:750}
-    .tco-breakdown-table .tco-saving-row th,.tco-breakdown-table .tco-saving-row td {padding:9px 8px;text-align:center}
+    .tco-breakdown-table .tco-saving-row {background:var(--green-soft);font-weight:800;font-size:1.05rem}
+    .tco-breakdown-table .tco-saving-row th,.tco-breakdown-table .tco-saving-row td {padding:13px 10px;text-align:center}.tco-saving-good{color:#187344}.tco-saving-bad{color:#c62832}
     .tco-chart-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;padding:16px}
     .tco-yearly-chart-card {grid-column:1/-1}
     .tco-axis-captions {display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-size:.82rem}
@@ -469,14 +469,14 @@
     };
     var app = document.getElementById("app");
     function newTruck(name) {
-      return {name:name,type:null,series:null,model:null,batteries:[],mode:"Standard",charger:null,intensity:"High",lift:"All"};
+      return {name:name,type:null,brand:null,series:null,model:null,batteries:[],mode:"Standard",charger:null,intensity:"High",lift:"All"};
     }
     var truckColors=["#c13e45","#3276a8","#56825e","#9b65a8","#d08c32","#438b8b"];
     function tr(id,en) { return state.lang==="id" ? id : en; }
     function titleCaseDisplayText(text){
       var lowerId=new Set(["di","ke","dan","yang","dari","untuk","pada","dengan","atau","dalam","sebagai","oleh","ini","itu","vs","and"]);
       var lowerEn=new Set(["of","and","in","the","to","for","with","a","an","on","at","by","from","vs"]);
-      var canonical={"t-lite":"T-LITE","tco":"TCO","ah":"Ah","ah/h":"Ah/h","kwh":"kWh","rp":"Rp","rp/kwh":"Rp/kWh","pt":"PT","pdf":"PDF","en":"EN","id":"ID","soc":"SOC","html":"HTML","css":"CSS","api":"API","wrs":"WRS","iphone":"iPhone","ipad":"iPad","javascript":"JavaScript","github":"GitHub","whatsapp":"WhatsApp"};
+      var canonical={"t-lite":"T-LITE","tco":"TCO","ah":"Ah","ah/h":"Ah/h","kwh":"kWh","rp":"Rp","rp/kwh":"Rp/kWh","pt":"PT","pdf":"PDF","en":"EN","id":"ID","soc":"SOC","html":"HTML","css":"CSS","api":"API","wrs":"WRS","iphone":"iPhone","ipad":"iPad","javascript":"JavaScript","github":"GitHub","whatsapp":"WhatsApp","cb":"CB","wh":"WH","rre":"RRE","bt":"BT","raymond":"Raymond"};
       return text.replace(/\b[\p{L}\p{N}]+(?:[-/'][\p{L}\p{N}]+)*\b/gu,function(word,index,whole){
         if(/\d/.test(word))return word;
         var key=word.toLocaleLowerCase();
@@ -506,6 +506,18 @@
     function typeOf(series) { return ["8FBE","8FBN","8FBH","8FB"].indexOf(series)>=0 ? "CB" : "WH"; }
     function modelsForType(type) {
       return CATALOG.models.filter(function(m){return typeOf(seriesOf(m.model))===type;});
+    }
+    function modelBrandOf(model){
+      var raw=String(model.brand||model.brandName||model.manufacturer||model.brand_name||model.make||model.vendor||"").toLowerCase();
+      if(raw.indexOf("raymond")>=0||/^rre/i.test(model.model))return "Raymond";
+      if(raw==="bt"||raw.indexOf("bt ")===0||/^bt[-_ ]/i.test(model.model))return "BT";
+      return "";
+    }
+    function batteryOptionsForSpec(spec){
+      var options=(spec&&Array.isArray(spec.battery_options)?spec.battery_options:[]).map(function(o){return Object.assign({},o);});
+      var isCB=typeOf(seriesOf(spec.model))==="CB",isRRE=seriesOf(spec.model)==="RRE";
+      if((isCB||isRRE)&&!options.some(function(o){return Number(o.ah)===735;}))options.push({ah:735,reserve_pct:0});
+      return options;
     }
     function fmtNum(n) { return new Intl.NumberFormat(state.lang==="id"?"id-ID":"en-US",{maximumFractionDigits:1}).format(n); }
     function fmtHours(n) { return new Intl.NumberFormat(state.lang==="id"?"id-ID":"en-US",{maximumFractionDigits:2}).format(n); }
@@ -587,14 +599,21 @@
       var html="";
       if(!t.type) return '<div class="inline-note">'+tr("Pilih tipe dulu. Seri dan model baru muncul setelahnya.","Choose a truck type first. Series and model will appear next.")+'</div>';
       var avail=modelsForType(t.type);
+      if(t.type==="WH"){
+        var brands=["BT","Raymond"];
+        html+='<div class="field"><label>'+tr("2 · Pilih merek","2 · Choose a brand")+'</label><div class="choice-row">'+brands.map(function(brand){return '<button class="choice '+(t.brand===brand?"selected":"")+'" data-act="brand" data-slot="'+slot+'" data-value="'+brand+'">'+brand+'</button>';}).join("")+'</div></div>';
+        if(!t.brand)return html;
+        avail=avail.filter(function(m){return modelBrandOf(m)===t.brand;});
+        if(!avail.length)return html+'<div class="inline-note">'+tr("Daftar seri WH untuk merek ini menunggu data katalog terbaru.","WH series for this brand are waiting for updated catalog data.")+'</div>';
+      }
       var seriesList=Array.from(new Set(avail.map(function(m){return seriesOf(m.model);}))).sort(function(a,b){return a.localeCompare(b,undefined,{numeric:true});});
-      html+='<div class="field"><label>'+tr("2 · Pilih seri","2 · Choose a series")+'</label><div class="choice-row">'+seriesList.map(function(s){return '<button class="choice '+(t.series===s?"selected":"")+'" data-act="series" data-slot="'+slot+'" data-value="'+esc(s)+'">'+esc(s)+'</button>';}).join("")+'</div></div>';
+      html+='<div class="field"><label>'+tr(t.type==="WH"?"3 · Pilih seri":"2 · Pilih seri",t.type==="WH"?"3 · Choose a series":"2 · Choose a series")+'</label><div class="choice-row">'+seriesList.map(function(s){return '<button class="choice '+(t.series===s?"selected":"")+'" data-act="series" data-slot="'+slot+'" data-value="'+esc(s)+'">'+esc(s)+'</button>';}).join("")+'</div></div>';
       if(!t.series) return html;
       var same=avail.filter(function(m){return seriesOf(m.model)===t.series;});
-      html+='<div class="field" style="margin-top:15px"><label>'+tr("3 · Pilih model forklift","3 · Choose a forklift model")+'</label><div class="model-grid">'+same.map(function(m){var photo=truckPhotoFor(m.model,t.type);return '<button class="model-card '+(t.model===m.model?"selected":"")+'" data-act="model" data-slot="'+slot+'" data-value="'+esc(m.model)+'"><span class="model-photo-wrap"><img class="model-photo" src="'+photo+'" alt="'+esc(m.model)+' forklift"></span><span class="model-name">'+esc(m.model)+'</span></button>';}).join("")+'</div></div>';
+      html+='<div class="field" style="margin-top:15px"><label>'+tr(t.type==="WH"?"4 · Pilih model forklift":"3 · Pilih model forklift",t.type==="WH"?"4 · Choose a forklift model":"3 · Choose a forklift model")+'</label><div class="model-grid">'+same.map(function(m){var photo=truckPhotoFor(m.model,t.type);return '<button class="model-card '+(t.model===m.model?"selected":"")+'" data-act="model" data-slot="'+slot+'" data-value="'+esc(m.model)+'"><span class="model-photo-wrap"><img class="model-photo" src="'+photo+'" alt="'+esc(m.model)+' forklift"></span><span class="model-name">'+esc(m.model)+'</span></button>';}).join("")+'</div></div>';
       if(!t.model) return html;
       var spec=CATALOG.models.find(function(m){return m.model===t.model;});
-      var batteryOptions=spec.battery_options||[];
+      var batteryOptions=batteryOptionsForSpec(spec);
       html+='<div class="field" style="margin-top:15px"><label>'+tr("4 · Pilih kapasitas untuk dibandingkan","4 · Choose capacities to compare")+'</label><div class="caps">'+batteryOptions.map(function(b){var selected=t.batteries.indexOf(b.ah)>=0;return '<button class="cap '+(selected?"selected":"")+'" data-act="battery" data-slot="'+slot+'" data-value="'+b.ah+'"><span class="checkmark"></span>'+fmtNum(b.ah)+' Ah</button>';}).join("")+'</div><p class="sub" style="margin-top:7px">'+tr("Klik satu atau beberapa kapasitas. Grafik nanti membandingkan baterai yang dicentang.","Select one or more capacities. The chart will compare the checked batteries.")+'</p></div>';
       if(spec.catalog_note) html+='<div class="inline-note" style="margin-top:10px">'+tr("Acuan RRE: kapasitas bergantung pada kompartemen baterai. Cocokkan konfigurasi unit sebelum dipakai untuk rekomendasi customer.","RRE reference: battery capacity depends on the battery compartment. Confirm the truck configuration before making customer recommendations.")+'</div>';
       var capacityChargeRefs=batteryOptions.map(function(b){var ref=chargerRefForCapacity(spec,b,t);return fmtNum(b.ah)+" Ah: "+(ref?fmtNum(ref)+" A":tr("tidak tercantum","not listed"));});
@@ -793,30 +812,16 @@
       ];
     }
     function tcoBreakdownTable(results) {
-      var items=tcoTableRows(results),lead=results.lead,lithium=results.lithium;
-      function part(brand,key,which){
-        if(!brand)return null;
-        var row=brand.breakdown.find(function(x){return x.key===key;})||{initial:0,running:0};
-        return which==="initial"?row.initial:which==="running"?row.running:row.initial+row.running;
-      }
-      function money(value){return value===null?"—":tcoMoney(value);}
-      var top='<thead><tr><th rowspan="2">'+tr("Komponen biaya","Cost component")+'</th><th colspan="3">Lead Acid</th><th rowspan="2">Traknus Lithium</th><th rowspan="2">'+tr("Penghematan","Cost reduction")+'</th></tr><tr><th>'+tr("Awal","Initial")+'</th><th>'+tr("Berjalan","Running")+'</th><th>'+tr("Total","Total")+'</th></tr></thead>';
-      var body=items.map(function(item){
-        var la=part(lead,item.key,"total"),li=part(lithium,item.key,"total");
-        return '<tr class="tco-cost-row" style="--cost-color:'+item.color+'"><th scope="row"><span class="tco-cost-swatch" style="--cost-color:'+item.color+'"></span>'+item.label+'</th><td>'+money(part(lead,item.key,"initial"))+'</td><td>'+money(part(lead,item.key,"running"))+'</td><td>'+money(la)+'</td><td>'+money(li)+'</td><td>'+((la===null||li===null)?"—":tcoSignedMoney(la-li))+'</td></tr>';
-      }).join("");
-      var leadRunning=lead?lead.breakdown.reduce(function(sum,row){return sum+row.running;},0):null;
-      var liRunning=lithium?lithium.breakdown.reduce(function(sum,row){return sum+row.running;},0):null;
-      var totals='<tr class="tco-total-row"><th>'+tr("Total biaya","Total cost")+'</th><td>'+money(lead?lead.initial:null)+'</td><td>'+money(leadRunning)+'</td><td><strong>'+money(lead?lead.total:null)+'</strong></td><td><strong>'+money(lithium?lithium.total:null)+'</strong></td><td><strong>'+((lead&&lithium)?tcoSignedMoney(lead.total-lithium.total):"—")+'</strong></td></tr>';
-      var savingPercent=lead&&lithium&&lead.total?((lead.total-lithium.total)/lead.total)*100:null;
-      var savingLabel=savingPercent===null?"—":savingPercent>=0?tcoPercent(savingPercent)+" "+tr("lebih hemat","lower"):tcoPercent(Math.abs(savingPercent))+" "+tr("lebih tinggi","higher");
-      var savingRow='<tr class="tco-saving-row"><th colspan="4">'+tr("Penghematan TCO dengan Lithium dibanding Lead Acid","TCO savings with Lithium versus Lead Acid")+'</th><td colspan="2"><strong>'+savingLabel+'</strong></td></tr>';
-      var extras=results.brands.filter(function(b){return b.id!=="lead-base"&&b.id!=="lithium-base";});
-      var extraTable="";
-      if(extras.length){
-        extraTable='<h4 class="tco-extra-title">'+tr("Merek tambahan","Additional brands")+'</h4><div class="report-table-wrap"><table class="tco-table tco-extra-table"><thead><tr><th>'+tr("Merek","Brand")+'</th><th>'+tr("Jenis baterai","Battery type")+'</th><th>'+tr("Biaya awal","Initial cost")+'</th><th>'+tr("Biaya berjalan","Running cost")+'</th><th>'+tr("Total","Total")+'</th><th>'+tr("Penghematan vs Lead Acid","Savings vs Lead Acid")+'</th></tr></thead><tbody>'+extras.map(function(b){var running=b.breakdown.reduce(function(sum,row){return sum+row.running;},0);return '<tr><th>'+esc(b.name)+'</th><td>'+(b.group==="lead"?tr("Lead Acid","Lead Acid"):tr("Lithium","Lithium"))+"</td><td>"+tcoMoney(b.initial)+"</td><td>"+tcoMoney(running)+"</td><td><strong>"+tcoMoney(b.total)+"</strong></td><td>"+(lead?tcoSignedMoney(lead.total-b.total):"—")+"</td></tr>";}).join("")+'</tbody></table></div>';
-      }
-      return '<div class="report-table-wrap tco-main-table-wrap"><table class="tco-table tco-breakdown-table">'+top+'<tbody>'+body+totals+savingRow+'</tbody></table></div>'+extraTable;
+      var items=tcoTableRows(results),brands=results.brands||[],baseline=results.lead;
+      function componentTotal(brand,key){var row=brand.breakdown.find(function(x){return x.key===key;})||{initial:0,running:0};return row.initial+row.running;}
+      function comparison(brand){return baseline&&baseline.total?((baseline.total-brand.total)/baseline.total)*100:null;}
+      function comparisonCell(brand){var pct=comparison(brand);if(pct===null)return "—";var cls=pct>0?"tco-saving-good":pct<0?"tco-saving-bad":"";var label=pct>0?tr("lebih hemat","lower cost"):pct<0?tr("lebih mahal","higher cost"):tr("setara","same cost");return '<span class="'+cls+'"><strong>'+tcoPercent(Math.abs(pct))+'</strong><br><small>'+label+'</small></span>';}
+      var top='<thead><tr><th>'+tr("Komponen biaya","Cost component")+'</th>'+brands.map(function(b){return '<th style="--cost-color:'+b.color+'"><span class="tco-cost-swatch" style="--cost-color:'+b.color+'"></span>'+esc(b.name)+'</th>';}).join("")+'</tr></thead>';
+      var body=items.map(function(item){return '<tr class="tco-cost-row" style="--cost-color:'+item.color+'"><th scope="row"><span class="tco-cost-swatch" style="--cost-color:'+item.color+'"></span>'+item.label+'</th>'+brands.map(function(b){return '<td>'+tcoMoney(componentTotal(b,item.key))+'</td>';}).join("")+'</tr>';}).join("");
+      var totals='<tr class="tco-total-row"><th>'+tr("Total biaya","Total cost")+'</th>'+brands.map(function(b){return '<td><strong>'+tcoMoney(b.total)+'</strong></td>';}).join("")+'</tr>';
+      var savingRow='<tr class="tco-saving-row"><th>'+tr("Penghematan TCO dibanding Lead Acid","TCO savings versus Lead Acid")+'</th>'+brands.map(function(b){return '<td>'+comparisonCell(b)+'</td>';}).join("")+'</tr>';
+      var tableMin=Math.max(720,220+brands.length*185);
+      return '<div class="report-table-wrap tco-main-table-wrap"><table class="tco-table tco-breakdown-table" style="min-width:'+tableMin+'px"><colgroup><col style="width:220px">'+brands.map(function(){return '<col style="width:185px">';}).join("")+'</colgroup>'+top+'<tbody>'+body+totals+savingRow+'</tbody></table></div>';
     }
     function tcoProjectionSection(results) {
       var categories=tcoTableRows(results);
@@ -919,7 +924,7 @@
       var replacementQty=p.replacementQty===""||p.replacementQty==null?calculatedReplacementQty:Math.max(0,tcoParse(p.replacementQty));
       var replacementPrice=p.replacementPrice===""||p.replacementPrice==null?(t.leadBatteryPrice?tcoInputMoney(t.leadBatteryPrice):""):tcoInputMoney(p.replacementPrice);
       var modelOptions=CATALOG.models.map(function(m){return '<option value="'+esc(m.model)+'" '+(m.model===t.model?'selected':'')+'>'+esc(m.model)+'</option>';}).join("");
-      var batteryOptions=model?(model.battery_options||[]).map(function(o){return '<option value="'+o.ah+'" '+(Number(t.capacity)===Number(o.ah)?'selected':'')+'>'+o.ah+' Ah</option>';}).join(""):"";
+      var batteryOptions=model?batteryOptionsForSpec(model).map(function(o){return '<option value="'+o.ah+'" '+(Number(t.capacity)===Number(o.ah)?'selected':'')+'>'+o.ah+' Ah</option>';}).join(""):"";
       var groups=[
         {name:tr("Info Operasi","Operation Info"),key:"operation",color:"#e8edf2",rows:[
           ["periodYears",tr("Operation Period","Operation Period"),tr("tahun","years")],
@@ -990,7 +995,7 @@
     }
     function simulatorEmailPayload(){
       ensureSchedule();var configs=allConfigs(),reports=[];
-      configs.forEach(function(config){(config.spec.battery_options||[]).filter(function(b){return config.truck.batteries.indexOf(b.ah)>=0;}).forEach(function(battery){var r=simulate(config,battery);reports.push({forklift:config.truck.name,model:config.spec.model,capacityAh:battery.ah,voltageV:config.spec.voltage_v,remainingSocPercent:r.end,minimumSocPercent:r.min,energyUseAhPerHour:r.draw,continuousRuntimeHours:r.runtime,timeSeries:r.points.map(function(p){return {time:p.clock,remainingSocPercent:p.soc};})});});});
+      configs.forEach(function(config){batteryOptionsForSpec(config.spec).filter(function(b){return config.truck.batteries.indexOf(b.ah)>=0;}).forEach(function(battery){var r=simulate(config,battery);reports.push({forklift:config.truck.name,model:config.spec.model,capacityAh:battery.ah,voltageV:config.spec.voltage_v,remainingSocPercent:r.end,minimumSocPercent:r.min,energyUseAhPerHour:r.draw,continuousRuntimeHours:r.runtime,timeSeries:r.points.map(function(p){return {time:p.clock,remainingSocPercent:p.soc};})});});});
       return {type:"simulator",requestId:newTliteRequestId("simulator"),timestamp:new Date().toISOString(),customer:{company:state.customer.company,location:state.customer.location,salesperson:state.customer.salesperson},report:{analysisType:"Lithium Battery Simulator",operationHoursPerDay:state.workdayHours,shiftCount:state.shiftCount,shifts:Array.from({length:state.shiftCount},function(_,i){return {shift:i+1,startTime:fmtClock(shiftStart(i)),workHours:shiftLength(i),breaks:state.breaks[i].map(function(b,j){return {break:j+1,startTime:fmtClock(breakStart(i,j)),durationMinutes:Number(b.length||0),charging:b.charge};})};}),forklifts:configs.map(function(c){return {name:c.truck.name,model:c.spec.model,type:c.truck.type,mode:c.truck.mode,intensity:intensityName(selectedIntensity(c.truck)),liftHeight:liftName(selectedLift(c.truck,c.spec)),batteryCapacitiesAh:c.truck.batteries};}),results:reports}};
     }
     function blobToDataUrl(blob){return new Promise(function(resolve,reject){var reader=new FileReader();reader.onload=function(){resolve(String(reader.result||""));};reader.onerror=function(){reject(new Error("Could not read simulator chart image"));};reader.readAsDataURL(blob);});}
@@ -1080,7 +1085,7 @@
     }
     function chargerRefForCapacity(spec,battery,truck) {
       var refs=CATALOG.charge_ref_by_capacity_a||{};
-      var mapped=Number(refs[String(Number(battery.ah))]||0);
+      var mapped=Number(battery.ah)===735?200:Number(refs[String(Number(battery.ah))]||0);
       if(mapped>0) return mapped;
       var existing=truck&&truck.charger!==null?Number(truck.charger):0;
       if(existing>0) return existing;
@@ -1217,7 +1222,7 @@
       }
       var truckRows=configs.map(function(c){
         var t=c.truck,spec=c.spec;
-        var selectedBatteries=(spec.battery_options||[]).filter(function(b){return t.batteries.indexOf(b.ah)>=0;});
+        var selectedBatteries=batteryOptionsForSpec(spec).filter(function(b){return t.batteries.indexOf(b.ah)>=0;});
         var rowBatteries=selectedBatteries.length?selectedBatteries:[null];
         return rowBatteries.map(function(b){
           var capacityText=b?fmtNum(b.ah)+" Ah":tr("Belum dipilih","Not selected");
@@ -1304,7 +1309,7 @@
       lines.push("");
       lines.push(tr("Hasil perkiraan:","Estimated results:"));
       configs.forEach(function(config){
-        (config.spec.battery_options||[]).filter(function(b){return config.truck.batteries.indexOf(b.ah)>=0;}).forEach(function(battery){
+        batteryOptionsForSpec(config.spec).filter(function(b){return config.truck.batteries.indexOf(b.ah)>=0;}).forEach(function(battery){
           var result=simulate(config,battery);
           lines.push(config.truck.name+" · "+config.spec.model+" · "+fmtNum(battery.ah)+" Ah: "+fmtNum(result.end)+"% "+tr("tersisa","remaining")+" · "+fmtNum(result.draw)+" Ah/h");
         });
@@ -1336,7 +1341,7 @@
     function analysisScreen() {
       var configs=allConfigs(), results=[];
       configs.forEach(function(c){
-        var selected=(c.spec.battery_options||[]).filter(function(b){return c.truck.batteries.indexOf(b.ah)>=0;});
+        var selected=batteryOptionsForSpec(c.spec).filter(function(b){return c.truck.batteries.indexOf(b.ah)>=0;});
         selected.forEach(function(b,batteryIndex){var result=simulate(c,b);result.batteryIndex=batteryIndex;results.push(result);});
       });
       if(!Array.isArray(state.visualResultKeys)) state.visualResultKeys=results.map(visualResultKey);
@@ -1390,9 +1395,10 @@
     app.addEventListener("click",function(e){
       var b=e.target.closest("[data-act]"); if(!b) return;
       var act=b.dataset.act,slot=b.dataset.slot,index=slot?Number(slot.slice(1))-1:0,t=state.trucks[index]||state.trucks[0];
-      if(act==="type"){t.type=b.dataset.value;t.series=null;t.model=null;t.batteries=[];t.charger=null;t.mode="Standard";}
+      if(act==="type"){t.type=b.dataset.value;t.brand=null;t.series=null;t.model=null;t.batteries=[];t.charger=null;t.mode="Standard";}
+      else if(act==="brand"){t.brand=b.dataset.value;t.series=null;t.model=null;t.batteries=[];t.charger=null;}
       else if(act==="series"){t.series=b.dataset.value;t.model=null;t.batteries=[];t.charger=null;}
-      else if(act==="model"){t.model=b.dataset.value;var spec=CATALOG.models.find(function(m){return m.model===t.model;});t.batteries=(spec.battery_options||[]).map(function(x){return x.ah;});t.charger=(spec.charger_options_a||[])[0]||0;if(!Object.keys(spec.power_modes||{}).includes(t.mode))t.mode="Standard";}
+      else if(act==="model"){t.model=b.dataset.value;var spec=CATALOG.models.find(function(m){return m.model===t.model;});t.batteries=batteryOptionsForSpec(spec).map(function(x){return x.ah;});t.charger=(spec.charger_options_a||[])[0]||0;if(!Object.keys(spec.power_modes||{}).includes(t.mode))t.mode="Standard";}
       else if(act==="battery"){var ah=Number(b.dataset.value);t.batteries=t.batteries.indexOf(ah)>=0?t.batteries.filter(function(x){return x!==ah;}):t.batteries.concat([ah]);}
       else if(act==="charger")t.charger=Number(b.dataset.value);
       else if(act==="mode")t.mode=b.dataset.value;
@@ -1464,7 +1470,7 @@
       if(input==="tco-new"){
         if(el.dataset.key==="model"){
           state.tco.model=el.value;
-          var selectedModel=tcoSelectedModel(),validCapacities=(selectedModel&&selectedModel.battery_options||[]).map(function(option){return Number(option.ah);});
+          var selectedModel=tcoSelectedModel(),validCapacities=(selectedModel?batteryOptionsForSpec(selectedModel):[]).map(function(option){return Number(option.ah);});
           if(validCapacities.indexOf(Number(state.tco.capacity))<0)state.tco.capacity=validCapacities.length?String(validCapacities[0]):"";
           render();return;
         }
@@ -1474,7 +1480,7 @@
       if(input==="viz-result"){var key=String(el.dataset.index)+"|"+String(el.dataset.ah);if(!el.checked&&state.visualResultKeys.length<=1)state.visualResultKeys=[key];else state.visualResultKeys=el.checked?(state.visualResultKeys.indexOf(key)>=0?state.visualResultKeys:state.visualResultKeys.concat([key])):state.visualResultKeys.filter(function(item){return item!==key;});}
       else if(input==="truck-type"&&t){t.type=el.value||null;t.series=null;t.model=null;t.batteries=[];t.charger=null;t.mode="Standard";}
       else if(input==="truck-series"&&t){t.series=el.value||null;t.model=null;t.batteries=[];t.charger=null;}
-      else if(input==="truck-model"&&t){t.model=el.value||null;if(t.model){var spec=CATALOG.models.find(function(m){return m.model===t.model;});t.batteries=(spec.battery_options||[]).map(function(x){return x.ah;});t.charger=(spec.charger_options_a||[])[0]||0;if(!Object.keys(spec.power_modes||{}).includes(t.mode))t.mode="Standard";}else t.batteries=[];}
+      else if(input==="truck-model"&&t){t.model=el.value||null;if(t.model){var spec=CATALOG.models.find(function(m){return m.model===t.model;});t.batteries=batteryOptionsForSpec(spec).map(function(x){return x.ah;});t.charger=(spec.charger_options_a||[])[0]||0;if(!Object.keys(spec.power_modes||{}).includes(t.mode))t.mode="Standard";}else t.batteries=[];}
       else if(input==="truck-battery"&&t){var ah=Number(el.dataset.value);t.batteries=el.checked?(t.batteries.indexOf(ah)>=0?t.batteries:t.batteries.concat([ah])):t.batteries.filter(function(x){return x!==ah;});}
       else if(input==="truck-mode"&&t)t.mode=el.value;
       
