@@ -43,8 +43,3 @@ Keep these files and folders in the repository root so the application can load 
 
 T-LITE is a static HTML, CSS, and JavaScript application. Customers can use it in a browser without installing Python or Streamlit.
 
-## Notes
-
-- `catalog.json` is required for the model specifications to load.
-- Keep the file and folder names unchanged unless you also update their paths in the application.
-- Analysis results are estimates based on the information entered and specifications available in the application.
